@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SimpleX Theme Creator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: sticky control column on the left, two phone previews and the exported theme file on the right. Chrome neutrals lean slightly blue-cyan to sit near SimpleX's own palette. */
+:root{
+  --bg:#f3f6f8; --panel:#ffffff; --fg:#14202a; --muted:#5b6b78; --line:#d9e1e7; --accent:#0a7e8c; --accent-fg:#ffffff; --field:#eef2f5; --focus:#0a7e8c;
+  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif; --f-head:'Space Grotesk','Inter',system-ui,sans-serif; --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d141b; --panel:#141d26; --fg:#e6edf3; --muted:#8c9ba8; --line:#25323e; --accent:#4fd1df; --accent-fg:#06222a; --field:#1b2732; --focus:#4fd1df; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d141b; --panel:#141d26; --fg:#e6edf3; --muted:#8c9ba8; --line:#25323e; --accent:#4fd1df; --accent-fg:#06222a; --field:#1b2732; --focus:#4fd1df; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1280px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between;margin-bottom:20px}
+h1{font-family:var(--f-head);font-weight:600;font-size:26px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted);max-width:60ch}
+.presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.presets span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:4px}
+button{font:inherit;color:inherit;cursor:pointer}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px}
+.chip:hover{border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.main{display:grid;grid-template-columns:minmax(0,370px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.controls{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 16px 16px;min-width:0}
+.controls h2{font-family:var(--f-head);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:18px 0 6px}
+.base{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;background:var(--field);padding:3px;border-radius:8px;margin-top:14px}
+.base button{border:0;background:transparent;border-radius:6px;padding:7px 0;font-size:13px;font-weight:500;color:var(--muted);transition:background .15s,color .15s}
+.base button:hover{color:var(--fg)}
+@media (min-width:901px){.controls{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto;scrollbar-width:thin}}
+.row{transition:background .15s,border-color .15s}
+.row:hover{background:color-mix(in srgb,var(--fg) 4%,transparent)}
+.phone{box-shadow:0 18px 40px -18px rgba(0,0,0,.45)}
+.sw{transition:transform .12s}.sw:hover{transform:scale(1.06)}
+.chip{transition:border-color .15s,transform .12s}.chip:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.base button[aria-pressed="true"]{background:var(--panel);color:var(--fg);box-shadow:0 0 0 1px var(--line)}
+.row{padding:9px 8px;margin:0 -8px;border-radius:8px;border:1px solid transparent}
+.row.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.row .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.row label{font-weight:500}
+.row .hint{font-size:12px;color:var(--muted);margin-top:1px}
+.row .ctl{display:grid;grid-template-columns:38px minmax(0,1fr) 98px;gap:8px;align-items:center;margin-top:7px}
+.sw{position:relative;width:38px;height:30px;border-radius:6px;border:1px solid var(--line);overflow:hidden;
+  background:repeating-conic-gradient(#8884 0 25%,transparent 0 50%) 0 0/10px 10px}
+.sw i{position:absolute;inset:0}
+.sw input{position:absolute;inset:-6px;width:60px;height:50px;opacity:0;cursor:pointer}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0}
+input.hex,input.num,select{width:100%;background:var(--field);border:1px solid var(--line);border-radius:6px;color:var(--fg);font-family:var(--f-mono);font-size:12px;padding:6px 7px}
+.alpha{display:flex;align-items:center;gap:6px;min-width:0}
+.alpha small{font-family:var(--f-mono);font-size:11px;color:var(--muted);width:26px;text-align:right}
+.wprow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.wprow label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+.stage{display:flex;flex-direction:column;gap:20px;min-width:0}
+.phones{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
+.phone{width:310px;max-width:100%;height:600px;border-radius:30px;border:6px solid var(--line);overflow:hidden;display:flex;flex-direction:column;
+  background:var(--p-bg);color:var(--p-fg);font-size:13px;position:relative}
+.cap{text-align:center;color:var(--muted);font-size:12px;margin-top:8px}
+[data-k]{cursor:pointer}
+[data-k].hl{outline:2px dashed var(--accent);outline-offset:1px}
+.bar{background:var(--p-menus);padding:10px 12px;display:flex;align-items:center;gap:10px;min-height:48px}
+.bar .t{font-weight:600;color:var(--p-title);font-size:15px;line-height:1.2}
+.bar .s{font-size:11px;color:var(--p-secondary)}
+.ico{width:18px;height:18px;flex:none}
+.av{width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:600;font-size:14px;color:var(--p-fg);background:var(--p-av)}
+.av.sm{width:30px;height:30px;font-size:12px}
+.search{margin:8px 12px;background:var(--p-menus);border-radius:10px;padding:8px 12px;color:var(--p-secondary);font-size:13px}
+.list{flex:1;overflow:hidden;background:var(--p-bg)}
+.item{display:flex;gap:10px;padding:9px 12px;align-items:center}
+.item.sel{background:var(--p-av)}
+.item .n{font-weight:500;display:flex;justify-content:space-between;gap:8px}
+.item .n em{font-style:normal;font-size:11px;color:var(--p-secondary);font-weight:400}
+.item .m{display:flex;justify-content:space-between;gap:8px;color:var(--p-secondary);font-size:12.5px}
+.item .txt{flex:1;min-width:0}
+.item .m span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{background:var(--p-accent);color:#fff;border-radius:999px;font-size:11px;min-width:18px;height:18px;padding:0 5px;display:grid;place-items:center;font-weight:600;flex:none}
+.fab{position:absolute;right:16px;bottom:16px;width:46px;height:46px;border-radius:50%;background:var(--p-accent);display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.fab svg{width:21px;height:21px}
+.conv{flex:1;position:relative;background:var(--p-wpbg);overflow:hidden}
+.conv .pat{position:absolute;inset:0;opacity:.07;background-image:radial-gradient(circle at 25% 25%,var(--p-fg) 2px,transparent 3px),radial-gradient(circle at 75% 75%,var(--p-fg) 2px,transparent 3px);background-size:var(--p-wpsize) var(--p-wpsize)}
+.conv .tint{position:absolute;inset:0;background:var(--p-wptint);pointer-events:none}
+.msgs{position:absolute;inset:0;padding:10px 10px;display:flex;flex-direction:column;gap:6px;justify-content:flex-end}
+.date{align-self:center;background:var(--p-secv);color:var(--p-fg);font-size:11px;padding:2px 10px;border-radius:999px}
+.sys{align-self:center;color:var(--p-accentv);font-size:12px}
+.b{max-width:80%;padding:6px 10px;border-radius:14px;position:relative}
+.b.r{align-self:flex-start;background:var(--p-recv);border-bottom-left-radius:4px}
+.b.s{align-self:flex-end;background:var(--p-sent);border-bottom-right-radius:4px}
+.b small{display:block;text-align:right;font-size:10px;color:var(--p-secondary);margin-top:2px}
+.b a{color:var(--p-accent);text-decoration:underline;text-underline-offset:2px}
+.q{border-radius:8px;padding:4px 8px;margin:-1px -4px 5px;font-size:12px}
+.q.r{background:var(--p-recvr)}.q.s{background:var(--p-sentr)}
+.q b{display:block;font-size:11px;color:var(--p-accent);font-weight:600}
+.input{background:var(--p-menus);padding:9px 10px;display:flex;gap:8px;align-items:center}
+.input .f{flex:1;background:var(--p-bg);border-radius:18px;padding:7px 12px;color:var(--p-secondary)}
+.send{width:32px;height:32px;border-radius:50%;background:var(--p-accent);display:grid;place-items:center;flex:none}
+.out{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:700px){.out{grid-template-columns:minmax(0,1fr)}}
+.out h2{font-family:var(--f-head);font-size:15px;margin:0 0 4px}
+.out p{margin:0 0 8px;color:var(--muted);font-size:12.5px}
+textarea{width:100%;height:290px;resize:vertical;background:var(--field);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:10px;font-family:var(--f-mono);font-size:12px;line-height:1.5}
+.btns{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.primary{background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:8px 14px;font-weight:600}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:8px;padding:7px 14px}
+.status{font-size:12px;color:var(--muted)}
+.note{font-size:12px;color:var(--muted);max-width:75ch}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>SimpleX Theme Creator</h1>
+    <p>Pick a color for each part of the app, see it on a chat list and a conversation straight away, then copy the <code>.theme</code> file and import it in SimpleX Chat.</p>
+  </div>
+  <div class="presets" id="presets"><span>Start from</span></div>
+</header>
+
+<div class="main">
+  <aside class="controls" id="controls">
+    <div class="base" role="group" aria-label="Base theme" id="base"></div>
+    <div id="groups"></div>
+    <h2>Wallpaper</h2>
+    <div id="wpcolors"></div>
+    <div class="wprow">
+      <div><label for="wpscale">Scale</label><input class="num" id="wpscale" type="number" step="0.1" min="0.2" max="5"></div>
+      <div><label for="wptype">Scale type</label>
+        <select id="wptype"><option>fill</option><option>fit</option><option>repeat</option></select></div>
+    </div>
+  </aside>
+
+  <section class="stage">
+    <div class="phones" id="preview">
+      <div>
+        <div class="phone" aria-label="Chat list preview">
+          <div class="bar" data-k="menus"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="var(--p-accent)" stroke-width="2" data-k="accent"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><div class="t" data-k="title">Your chats</div><span style="flex:1"></span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="var(--p-accent)" stroke-width="2" data-k="accent"><path d="M12 5v14M5 12h14"/></svg></div>
+          <div class="search" data-k="secondary">Search or paste SimpleX link</div>
+          <div class="list">
+            <div class="item"><div class="av">A</div><div class="txt"><div class="n">Anna Kovács <em data-k="secondary">21:40</em></div><div class="m"><span>Let me know what you think</span><b class="badge" data-k="accent">2</b></div></div></div>
+            <div class="item sel" data-k="accentVariant2"><div class="av" style="background:var(--p-accentv)" data-k="accentVariant">D</div><div class="txt"><div class="n">Dev group <em data-k="secondary">20:12</em></div><div class="m"><span>Marek: tint looks great on black</span></div></div></div>
+            <div class="item"><div class="av">P</div><div class="txt"><div class="n">Private notes <em data-k="secondary">Wed</em></div><div class="m"><span>Everything stays on your device</span></div></div></div>
+            <div class="item"><div class="av">T</div><div class="txt"><div class="n">Bob <em data-k="secondary">Tue</em></div><div class="m"><span>See you at the meetup</span></div></div></div>
+            <div class="item"><div class="av">N</div><div class="txt"><div class="n">Alice <em data-k="secondary">Mon</em></div><div class="m"><span>Thanks, I'll try it tonight</span><b class="badge" data-k="accent">1</b></div></div></div>
+            <div class="item"><div class="av">S</div><div class="txt"><div class="n">Server admins <em data-k="secondary">Sun</em></div><div class="m"><span>SMP relay updated to the latest</span></div></div></div>
+          </div>
+          <div class="fab" data-k="accent"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg></div>
+        </div>
+        <div class="cap">Chat list. Click any part to jump to its color.</div>
+      </div>
+      <div>
+        <div class="phone" aria-label="Conversation preview">
+          <div class="bar" data-k="menus"><div class="av sm">A</div><div><div class="t" data-k="title">Anna Kovács</div><div class="s" data-k="secondary">connected</div></div></div>
+          <div class="conv" data-k="wpBackground">
+            <div class="pat"></div><div class="tint" data-k="wpTint"></div>
+            <div class="msgs">
+              <div class="date" data-k="secondaryVariant">Thursday</div>
+              <div class="sys" data-k="accentVariant">e2e encrypted</div>
+              <div class="b r" data-k="receivedMessage">Does the new theme feel right?<small>21:38</small></div>
+              <div class="b s" data-k="sentMessage"><div class="q s" data-k="sentReply"><b>Anna</b>Does the new theme feel right?</div>Yes, the accent works. Try <a data-k="accent">simplex.chat</a><small>21:39 ✓✓</small></div>
+              <div class="b r" data-k="receivedMessage"><div class="q r" data-k="receivedReply"><b>You</b>Yes, the accent works</div>Great, I'll export it<small>21:40</small></div>
+            </div>
+          </div>
+          <div class="input" data-k="menus"><div class="f" data-k="secondary">Message</div><div class="send" data-k="accent"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div></div>
+        </div>
+        <div class="cap">Conversation with wallpaper and tint.</div>
+      </div>
+    </div>
+
+    <div class="out">
+      <div>
+        <h2>Your theme file</h2>
+        <p>Copy this, save it as <code>mytheme.theme</code>, then use Appearance → Import theme in SimpleX Chat.</p>
+        <textarea id="yaml" readonly spellcheck="false" aria-label="Theme file contents"></textarea>
+        <div class="btns"><button class="primary" id="copy">Copy theme</button><span class="status" id="status" role="status"></span></div>
+      </div>
+      <div>
+        <h2>Import an existing theme</h2>
+        <p>Paste the contents of a <code>.theme</code> file to edit it here.</p>
+        <textarea id="imp" spellcheck="false" placeholder='base: "DARK"&#10;colors:&#10;  accent: "#ff81a1c1"&#10;  ...' aria-label="Paste theme to import"></textarea>
+        <div class="btns"><button class="ghost" id="apply">Load into editor</button><span class="status" id="istatus" role="status"></span></div>
+      </div>
+    </div>
+    <p class="note">The preview is a hand-built approximation of the SimpleX Chat screens, not rendered from the app's own code. Which preview element uses which color is based on how the app labels them and on community themes, so check an export once in the real app. Colors are stored as <code>#AARRGGBB</code>, the same as the app's theme files.</p>
+  </section>
+</div>
+</div>
+
+<script>
+(function(){
+var COLORS=[
+ {g:'Brand',items:[
+  ['accent','Accent','Buttons, links, badges, active icons'],
+  ['accentVariant','Accent variant','Secondary highlights, system text'],
+  ['accentVariant2','Accent variant 2','Selected rows and avatars']]},
+ {g:'Text and icons',items:[
+  ['title','Title','Screen titles and chat names'],
+  ['secondary','Secondary','Hints, timestamps, placeholder text'],
+  ['secondaryVariant','Secondary variant','Date chips and quiet fills']]},
+ {g:'Surfaces',items:[
+  ['background','Background','Main screen background'],
+  ['menus','Menus','Top bar, bottom bar, input bar']]},
+ {g:'Messages',items:[
+  ['sentMessage','Sent message','Your message bubbles'],
+  ['sentReply','Sent reply','Quote inside your replies'],
+  ['receivedMessage','Received message','Their message bubbles'],
+  ['receivedReply','Received reply','Quote inside their replies']]}
+];
+var WPC=[['wpBackground','Wallpaper background','Fill color behind the pattern'],['wpTint','Wallpaper tint','Color laid over the wallpaper']];
+var PRESETS={
+ 'SimpleX Dark':{base:'DARK',c:{accent:'#ff70f0f9',accentVariant:'#ff1298a5',secondary:'#ff8b8786',secondaryVariant:'#ff2c464d',background:'#ff111528',menus:'#ff121c37',title:'#ff267be5',accentVariant2:'#ff172941',sentMessage:'#ff59586e',sentReply:'#ff113457',receivedMessage:'#ff25283a',receivedReply:'#ff36394a',wpBackground:'#ff111528',wpTint:'#00ffffff'},scale:1,type:'fill'},
+ 'Light starter':{base:'LIGHT',c:{accent:'#ff0088ff',accentVariant:'#ff0070d8',secondary:'#ff6b7280',secondaryVariant:'#ffd7e6f5',background:'#ffffffff',menus:'#fff4f6f8',title:'#ff0053d0',accentVariant2:'#ffe3f0ff',sentMessage:'#ffd2e8ff',sentReply:'#ffb5d7f7',receivedMessage:'#ffeceff2',receivedReply:'#ffdde2e8',wpBackground:'#ffffffff',wpTint:'#00ffffff'},scale:1,type:'fill'}
+};
+var BASES=['DARK','LIGHT'];
+var S={base:'DARK',c:{},scale:1,type:'fill'};
+
+function $(id){return document.getElementById(id)}
+function parse(s){s=String(s||'').trim().replace(/^#/,'').replace(/^["']|["']$/g,'');if(s.length===6)s='ff'+s;if(!/^[0-9a-fA-F]{8}$/.test(s))return null;return{a:parseInt(s.slice(0,2),16),hex:'#'+s.slice(2).toLowerCase()}}
+function fmt(a,hex){return '#'+a.toString(16).padStart(2,'0')+hex.slice(1).toLowerCase()}
+function css(s){var p=parse(s);if(!p)return'transparent';var h=p.hex;return 'rgba('+parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+','+parseInt(h.slice(5,7),16)+','+(p.a/255).toFixed(3)+')'}
+function load(p){S.base=p.base;S.c=Object.assign({},p.c);S.scale=p.scale;S.type=p.type;render(true)}
+
+/* build controls */
+function row(k,n,h){
+  var d=document.createElement('div');d.className='row';d.id='row-'+k;
+  d.innerHTML='<div class="top"><label for="hex-'+k+'">'+n+'</label></div><div class="hint">'+h+'</div>'+
+   '<div class="ctl"><div class="sw"><i></i><input type="color" id="pick-'+k+'" aria-label="'+n+' color"></div>'+
+   '<div class="alpha"><input type="range" min="0" max="255" id="al-'+k+'" aria-label="'+n+' opacity"><small id="alv-'+k+'"></small></div>'+
+   '<input class="hex" id="hex-'+k+'" maxlength="9" spellcheck="false"></div>';
+  d.addEventListener('mouseenter',function(){hl(k,true)});d.addEventListener('mouseleave',function(){hl(k,false)});
+  var pick=d.querySelector('#pick-'+k),al=d.querySelector('#al-'+k),hex=d.querySelector('#hex-'+k);
+  pick.addEventListener('input',function(){var p=parse(S.c[k]);S.c[k]=fmt(p.a,pick.value);render()});
+  al.addEventListener('input',function(){var p=parse(S.c[k]);S.c[k]=fmt(+al.value,p.hex);render()});
+  hex.addEventListener('input',function(){var p=parse(hex.value);if(p){S.c[k]=fmt(p.a,p.hex);render(false,k)}});
+  hex.addEventListener('blur',function(){render(true)});
+  return d;
+}
+function hl(k,on){document.querySelectorAll('[data-k="'+k+'"]').forEach(function(e){e.classList.toggle('hl',on)})}
+var g=$('groups');
+COLORS.forEach(function(grp){var h=document.createElement('h2');h.textContent=grp.g;g.appendChild(h);grp.items.forEach(function(i){g.appendChild(row(i[0],i[1],i[2]))})});
+WPC.forEach(function(i){$('wpcolors').appendChild(row(i[0],i[1],i[2]))});
+var bb=$('base');BASES.forEach(function(b){var x=document.createElement('button');x.textContent=b[0]+b.slice(1).toLowerCase();x.dataset.b=b;x.addEventListener('click',function(){S.base=b;render()});bb.appendChild(x)});
+var ps=$('presets');Object.keys(PRESETS).forEach(function(n){var x=document.createElement('button');x.className='chip';x.textContent=n;x.addEventListener('click',function(){load(PRESETS[n])});ps.appendChild(x)});
+$('wpscale').addEventListener('input',function(){var v=parseFloat(this.value);if(v>0){S.scale=v;render(false)}});
+$('wptype').addEventListener('change',function(){S.type=this.value;render()});
+
+/* preview -> control */
+$('preview').addEventListener('click',function(e){
+  var t=e.target.closest('[data-k]');if(!t)return;
+  var r=$('row-'+t.dataset.k);if(!r)return;
+  document.querySelectorAll('.row.active').forEach(function(x){x.classList.remove('active')});
+  r.classList.add('active');r.scrollIntoView({block:'center',behavior:'smooth'});
+  setTimeout(function(){r.classList.remove('active')},1800);
+});
+
+var MAP={accent:'--p-accent',accentVariant:'--p-accentv',accentVariant2:'--p-av',secondary:'--p-secondary',secondaryVariant:'--p-secv',title:'--p-title',background:'--p-bg',menus:'--p-menus',sentMessage:'--p-sent',sentReply:'--p-sentr',receivedMessage:'--p-recv',receivedReply:'--p-recvr',wpBackground:'--p-wpbg',wpTint:'--p-wptint'};
+
+function render(full,skip){
+  var pv=$('preview');
+  Object.keys(MAP).forEach(function(k){pv.style.setProperty(MAP[k],css(S.c[k]))});
+  pv.style.setProperty('--p-fg',S.base==='LIGHT'?'#111418':'#ffffff');
+  pv.style.setProperty('--p-wpsize',Math.max(14,Math.round(36*S.scale))+'px');
+  Object.keys(MAP).forEach(function(k){
+    var p=parse(S.c[k]);if(!p)return;
+    var r=$('row-'+k);
+    r.querySelector('.sw i').style.background=css(S.c[k]);
+    r.querySelector('#pick-'+k).value=p.hex;
+    r.querySelector('#al-'+k).value=p.a;
+    r.querySelector('#alv-'+k).textContent=Math.round(p.a/2.55)+'%';
+    var hx=r.querySelector('#hex-'+k);
+    if(k!==skip&&document.activeElement!==hx)hx.value=S.c[k];
+  });
+  if(full){$('wpscale').value=S.scale;$('wptype').value=S.type}
+  bb.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.b===S.base)});
+  $('yaml').value=toYaml();
+}
+function toYaml(){
+  var c=S.c,L=['base: "'+S.base+'"','colors:'];
+  ['accent','accentVariant','secondary','secondaryVariant','background','menus','title','accentVariant2','sentMessage','sentReply','receivedMessage','receivedReply'].forEach(function(k){L.push('  '+k+': "'+c[k]+'"')});
+  L.push('wallpaper:','  scale: '+Number(S.scale).toFixed(1),'  scaleType: "'+S.type+'"','  background: "'+c.wpBackground+'"','  tint: "'+c.wpTint+'"');
+  return L.join('\n')+'\n';
+}
+function fromYaml(t){
+  var out={base:S.base,c:Object.assign({},S.c),scale:S.scale,type:S.type},sec='',n=0;
+  t.split(/\r?\n/).forEach(function(line){
+    var m=line.match(/^(\s*)([A-Za-z0-9]+)\s*:\s*(.*)$/);if(!m)return;
+    var ind=m[1].length,k=m[2],v=m[3].trim().replace(/^["']|["']$/g,'');
+    if(ind===0){sec=k;if(k==='base'){var u=v.toUpperCase();out.base=(u==='LIGHT')?'LIGHT':'DARK';n++}return}
+    if(sec==='colors'&&MAP[k]&&parse(v)){var p=parse(v);out.c[k]=fmt(p.a,p.hex);n++}
+    if(sec==='wallpaper'){
+      if(k==='background'&&parse(v)){var q=parse(v);out.c.wpBackground=fmt(q.a,q.hex);n++}
+      if(k==='tint'&&parse(v)){var w=parse(v);out.c.wpTint=fmt(w.a,w.hex);n++}
+      if(k==='scale'&&parseFloat(v)>0){out.scale=parseFloat(v);n++}
+      if(k==='scaleType'&&/^(fill|fit|repeat)$/.test(v)){out.type=v;n++}
+    }
+  });
+  return n?out:null;
+}
+$('apply').addEventListener('click',function(){
+  var r=fromYaml($('imp').value),s=$('istatus');
+  if(!r){s.textContent='No theme values found. Paste the full file contents.';return}
+  S.base=r.base;S.c=r.c;S.scale=r.scale;S.type=r.type;render(true);s.textContent='Loaded.';
+});
+$('copy').addEventListener('click',function(){
+  var ta=$('yaml'),s=$('status');
+  function fb(){ta.focus();ta.select();s.textContent='Selected. Press copy on your keyboard.'}
+  try{navigator.clipboard.writeText(ta.value).then(function(){s.textContent='Copied.';setTimeout(function(){s.textContent=''},2000)},fb)}catch(e){fb()}
+});
+load(PRESETS['SimpleX Dark']);
+})();
+</script>
+</body>
+</html>
