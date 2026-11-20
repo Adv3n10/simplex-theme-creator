@@ -6,7 +6,7 @@ A visual color editor for [SimpleX Chat](https://simplex.chat) themes. Pick a co
 
 ## Use it
 
-Open `index.html` in any browser. It is a single file with no build step and no server needed (fonts load from Google Fonts when online). It also works on GitHub Pages.
+Open `index.html` in any browser. It is a single file with no build step and no server needed (fonts load from Google Fonts when online). It also works on [GitHub Pages](https://adv3n10.github.io/simplex-theme-creator/).
 
 1. Choose a base (Dark or Light) or start from a preset.
 2. Change colors with the picker, the opacity slider or the `#AARRGGBB` hex field. You can also click a part of the preview to jump to its color.
