@@ -17,6 +17,8 @@ A visual color editor for [SimpleX Chat](https://simplex.chat) themes. Pick a co
 
 ## Use it
 
+Best used on a desktop browser.
+
 Use the [live version](https://adv3n10.github.io/simplex-theme-creator/), or download this repo and open `index.html` in any browser. It is a single file with no build step and no server needed (fonts load from Google Fonts when online).
 
 1. Choose a base (Dark or Light) or start from a preset.
