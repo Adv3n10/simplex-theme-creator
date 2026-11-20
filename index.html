@@ -176,9 +176,9 @@ textarea{width:100%;height:290px;resize:vertical;background:var(--field);color:v
     <div class="out">
       <div>
         <h2>Your theme file</h2>
-        <p>Copy this, save it as <code>mytheme.theme</code>, then use Appearance → Import theme in SimpleX Chat.</p>
+        <p>Download it as <code>mytheme.theme</code> (or copy the text and save it yourself), then use Appearance → Import theme in SimpleX Chat.</p>
         <textarea id="yaml" readonly spellcheck="false" aria-label="Theme file contents"></textarea>
-        <div class="btns"><button class="primary" id="copy">Copy theme</button><span class="status" id="status" role="status"></span></div>
+        <div class="btns"><button class="primary" id="copy">Copy theme</button><button class="ghost" id="dl">Download .theme</button><span class="status" id="status" role="status"></span></div>
       </div>
       <div>
         <h2>Import an existing theme</h2>
@@ -311,6 +311,16 @@ $('copy').addEventListener('click',function(){
   var ta=$('yaml'),s=$('status');
   function fb(){ta.focus();ta.select();s.textContent='Selected. Press copy on your keyboard.'}
   try{navigator.clipboard.writeText(ta.value).then(function(){s.textContent='Copied.';setTimeout(function(){s.textContent=''},2000)},fb)}catch(e){fb()}
+});
+$('dl').addEventListener('click',function(){
+  var s=$('status');
+  try{
+    var url=URL.createObjectURL(new Blob([$('yaml').value],{type:'text/plain'}));
+    var a=document.createElement('a');a.href=url;a.download='mytheme.theme';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url)},1000);
+    s.textContent='Saved as mytheme.theme.';setTimeout(function(){s.textContent=''},2500);
+  }catch(e){s.textContent='Download failed. Use Copy theme instead.'}
 });
 load(PRESETS['SimpleX Dark']);
 })();
