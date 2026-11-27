@@ -2,327 +2,872 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SimpleX Theme Creator</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap">
+<meta name="description" content="A visual color editor for SimpleX Chat themes with live preview, palette generator and .theme export.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: sticky control column on the left, two phone previews and the exported theme file on the right. Chrome neutrals lean slightly blue-cyan to sit near SimpleX's own palette. */
+/* ---------- Tokens: light first, dark via media query and explicit toggle ---------- */
 :root{
-  --bg:#f3f6f8; --panel:#ffffff; --fg:#14202a; --muted:#5b6b78; --line:#d9e1e7; --accent:#0a7e8c; --accent-fg:#ffffff; --field:#eef2f5; --focus:#0a7e8c;
-  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif; --f-head:'Space Grotesk','Inter',system-ui,sans-serif; --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  --bg:#f3f5f8; --panel:#ffffff; --panel-2:#f8fafc; --fg:#0f1720; --muted:#5d6b7a; --faint:#8a97a5;
+  --line:#e3e8ee; --line-strong:#cdd6e0; --field:#f1f4f8; --hover:rgba(15,23,32,.04);
+  --accent:#0a7e8c; --accent-fg:#ffffff; --accent-soft:rgba(10,126,140,.10);
+  --ok:#137a44; --ok-soft:rgba(19,122,68,.12); --warn:#b4540a; --warn-soft:rgba(180,84,10,.12); --bad:#c42b3b;
+  --dots:rgba(15,23,32,.07); --shadow:0 1px 2px rgba(15,23,32,.04),0 8px 24px -12px rgba(15,23,32,.12);
+  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:14px; --bar-h:60px;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0d141b; --panel:#141d26; --fg:#e6edf3; --muted:#8c9ba8; --line:#25323e; --accent:#4fd1df; --accent-fg:#06222a; --field:#1b2732; --focus:#4fd1df; color-scheme:dark}}
+  --bg:#0a0f15; --panel:#10171f; --panel-2:#0d141b; --fg:#e6edf3; --muted:#8b9aa8; --faint:#647381;
+  --line:#1d2833; --line-strong:#2b3947; --field:#151e28; --hover:rgba(230,237,243,.04);
+  --accent:#4fd1df; --accent-fg:#04222a; --accent-soft:rgba(79,209,223,.12);
+  --ok:#4ade80; --ok-soft:rgba(74,222,128,.12); --warn:#fbbf24; --warn-soft:rgba(251,191,36,.12); --bad:#f87171;
+  --dots:rgba(230,237,243,.06); --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -12px rgba(0,0,0,.6);
+  color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0d141b; --panel:#141d26; --fg:#e6edf3; --muted:#8c9ba8; --line:#25323e; --accent:#4fd1df; --accent-fg:#06222a; --field:#1b2732; --focus:#4fd1df; color-scheme:dark}
+  --bg:#0a0f15; --panel:#10171f; --panel-2:#0d141b; --fg:#e6edf3; --muted:#8b9aa8; --faint:#647381;
+  --line:#1d2833; --line-strong:#2b3947; --field:#151e28; --hover:rgba(230,237,243,.04);
+  --accent:#4fd1df; --accent-fg:#04222a; --accent-soft:rgba(79,209,223,.12);
+  --ok:#4ade80; --ok-soft:rgba(74,222,128,.12); --warn:#fbbf24; --warn-soft:rgba(251,191,36,.12); --bad:#f87171;
+  --dots:rgba(230,237,243,.06); --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -12px rgba(0,0,0,.6);
+  color-scheme:dark}
+
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.45;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
-.wrap{max-width:1280px;margin:0 auto}
-header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between;margin-bottom:20px}
-h1{font-family:var(--f-head);font-weight:600;font-size:26px;margin:0;letter-spacing:-.01em;text-wrap:balance}
-header p{margin:4px 0 0;color:var(--muted);max-width:60ch}
-.presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.presets span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:4px}
-button{font:inherit;color:inherit;cursor:pointer}
-.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px}
-.chip:hover{border-color:var(--accent)}
-:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-.main{display:grid;grid-template-columns:minmax(0,370px) minmax(0,1fr);gap:20px;align-items:start}
-@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
-.controls{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 16px 16px;min-width:0}
-.controls h2{font-family:var(--f-head);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:18px 0 6px}
-.base{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;background:var(--field);padding:3px;border-radius:8px;margin-top:14px}
-.base button{border:0;background:transparent;border-radius:6px;padding:7px 0;font-size:13px;font-weight:500;color:var(--muted);transition:background .15s,color .15s}
-.base button:hover{color:var(--fg)}
-@media (min-width:901px){.controls{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto;scrollbar-width:thin}}
-.row{transition:background .15s,border-color .15s}
-.row:hover{background:color-mix(in srgb,var(--fg) 4%,transparent)}
-.phone{box-shadow:0 18px 40px -18px rgba(0,0,0,.45)}
-.sw{transition:transform .12s}.sw:hover{transform:scale(1.06)}
-.chip{transition:border-color .15s,transform .12s}.chip:active{transform:scale(.97)}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
-.base button[aria-pressed="true"]{background:var(--panel);color:var(--fg);box-shadow:0 0 0 1px var(--line)}
-.row{padding:9px 8px;margin:0 -8px;border-radius:8px;border:1px solid transparent}
-.row.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
-.row .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
-.row label{font-weight:500}
-.row .hint{font-size:12px;color:var(--muted);margin-top:1px}
-.row .ctl{display:grid;grid-template-columns:38px minmax(0,1fr) 98px;gap:8px;align-items:center;margin-top:7px}
-.sw{position:relative;width:38px;height:30px;border-radius:6px;border:1px solid var(--line);overflow:hidden;
-  background:repeating-conic-gradient(#8884 0 25%,transparent 0 50%) 0 0/10px 10px}
-.sw i{position:absolute;inset:0}
-.sw input{position:absolute;inset:-6px;width:60px;height:50px;opacity:0;cursor:pointer}
-input[type=range]{width:100%;accent-color:var(--accent);margin:0}
-input.hex,input.num,select{width:100%;background:var(--field);border:1px solid var(--line);border-radius:6px;color:var(--fg);font-family:var(--f-mono);font-size:12px;padding:6px 7px}
-.alpha{display:flex;align-items:center;gap:6px;min-width:0}
-.alpha small{font-family:var(--f-mono);font-size:11px;color:var(--muted);width:26px;text-align:right}
-.wprow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
-.wprow label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
-.stage{display:flex;flex-direction:column;gap:20px;min-width:0}
-.phones{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
-.phone{width:310px;max-width:100%;height:600px;border-radius:30px;border:6px solid var(--line);overflow:hidden;display:flex;flex-direction:column;
-  background:var(--p-bg);color:var(--p-fg);font-size:13px;position:relative}
-.cap{text-align:center;color:var(--muted);font-size:12px;margin-top:8px}
+html{scroll-padding-top:calc(var(--bar-h) + 16px)}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.45;
+  -webkit-font-smoothing:antialiased;font-feature-settings:"cv11","ss01"}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+code{font-family:var(--f-mono);font-size:.92em;background:var(--field);padding:1px 5px;border-radius:5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.checker{background:repeating-conic-gradient(#8885 0 25%,transparent 0 50%) 0 0/10px 10px}
+
+/* ---------- App bar ---------- */
+.appbar{position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top,0px);
+  background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);
+  border-bottom:1px solid var(--line)}
+.appbar .in{max-width:1440px;margin:0 auto;min-height:var(--bar-h);display:flex;align-items:center;gap:12px;
+  padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));flex-wrap:wrap;padding-block:8px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;margin-right:auto}
+.logo{width:32px;height:32px;border-radius:9px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(135deg,#70f0f9,#267be5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.logo svg{width:18px;height:18px}
+.brand b{font-weight:650;font-size:15px;letter-spacing:-.01em;white-space:nowrap}
+.pill{font-size:11px;font-weight:500;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin-left:8px;white-space:nowrap}
+.actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.name{display:flex;align-items:center;background:var(--field);border:1px solid var(--line);border-radius:10px;height:36px;padding:0 4px 0 10px;min-width:0}
+.name input{border:0;background:transparent;width:130px;min-width:0;font-size:13px;outline:none}
+.name span{font-family:var(--f-mono);font-size:12px;color:var(--faint);padding-right:6px}
+.name:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.ibtn{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--fg);flex:none;transition:background .15s,border-color .15s,opacity .15s}
+.ibtn:hover:not(:disabled){border-color:var(--line-strong);background:var(--panel-2)}
+.ibtn:disabled{opacity:.4;cursor:default}
+.ibtn svg{width:17px;height:17px}
+.grp{display:flex}
+.grp .ibtn:first-child{border-radius:10px 0 0 10px}
+.grp .ibtn:last-child{border-radius:0 10px 10px 0;border-left:0}
+.btn{height:36px;display:inline-flex;align-items:center;gap:7px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:550;font-size:13px;white-space:nowrap;transition:background .15s,border-color .15s,transform .1s}
+.btn:hover{border-color:var(--line-strong);background:var(--panel-2)}
+.btn:active{transform:scale(.98)}
+.btn svg{width:16px;height:16px;flex:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.primary:hover{background:color-mix(in srgb,var(--accent) 88%,var(--fg))}
+.btn.sm{height:32px;padding:0 11px;font-size:12.5px}
+
+/* ---------- Layout ---------- */
+.main{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:20px;align-items:start;
+  padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:20px 56px}
+@media (max-width:960px){.main{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.eyebrow{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+
+/* ---------- Controls ---------- */
+.controls{min-width:0;display:flex;flex-direction:column;gap:12px}
+@media (min-width:961px){.controls{position:sticky;top:calc(var(--bar-h) + 16px);max-height:calc(100dvh - var(--bar-h) - 32px);overflow-y:auto;scrollbar-width:thin;padding-right:4px;margin-right:-4px;overscroll-behavior:contain}}
+.start{padding:16px}
+.start section+section{margin-top:18px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;background:var(--field);padding:3px;border-radius:10px;border:1px solid var(--line)}
+.seg button{border:0;background:transparent;border-radius:7px;padding:7px 0;font-size:12.5px;font-weight:550;color:var(--muted);transition:background .15s,color .15s,box-shadow .15s}
+.seg button:hover{color:var(--fg)}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 1px var(--line)}
+.help{font-size:12px;color:var(--muted);margin:7px 0 0}
+.presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.preset{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid var(--line);background:var(--panel-2);border-radius:11px;padding:8px 10px;transition:border-color .15s,transform .1s,background .15s;min-width:0}
+.preset:hover{border-color:var(--line-strong)}
+.preset:active{transform:scale(.98)}
+.preset[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.preset .mini{width:30px;height:30px;border-radius:8px;flex:none;position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(127,127,127,.25)}
+.preset .mini i{position:absolute}
+.preset .mini .m1{left:4px;top:5px;width:15px;height:6px;border-radius:3px}
+.preset .mini .m2{right:4px;top:13px;width:15px;height:6px;border-radius:3px}
+.preset .mini .m3{right:4px;bottom:4px;width:7px;height:7px;border-radius:50%}
+.preset span{font-size:12.5px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.preset small{display:block;font-size:11px;color:var(--faint);font-weight:400}
+.gen{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.gen .btn{flex:1}
+
+details.group{padding:0}
+details.group>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;user-select:none;border-radius:var(--r)}
+details.group>summary::-webkit-details-marker{display:none}
+details.group>summary:hover{background:var(--hover)}
+summary h3{margin:0;font-size:13.5px;font-weight:600;flex:1}
+.strip{display:flex}
+.strip i{width:16px;height:16px;border-radius:50%;margin-left:-5px;box-shadow:0 0 0 2px var(--panel);background:linear-gradient(var(--c),var(--c)),repeating-conic-gradient(#8885 0 25%,transparent 0 50%) 0 0/6px 6px}
+.chev{width:16px;height:16px;color:var(--muted);transition:transform .2s}
+details[open] .chev{transform:rotate(180deg)}
+.rows{padding:0 8px 8px}
+
+.row{display:grid;grid-template-columns:42px minmax(0,1fr) 104px;grid-template-areas:"sw meta hex" "sw sub sub";gap:6px 10px;align-items:center;
+  padding:9px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s}
+.row:hover{background:var(--hover)}
+.row.flash{border-color:var(--accent);background:var(--accent-soft)}
+.sw{grid-area:sw;position:relative;align-self:stretch;min-height:46px;border-radius:10px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(127,127,127,.3);transition:transform .12s}
+.sw:hover{transform:scale(1.04)}
+.sw i{position:absolute;inset:0;background:linear-gradient(var(--c),var(--c)),repeating-conic-gradient(#8885 0 25%,transparent 0 50%) 0 0/10px 10px}
+.sw input{position:absolute;inset:-8px;width:calc(100% + 16px);height:calc(100% + 16px);opacity:0;cursor:pointer;border:0;padding:0}
+.meta{grid-area:meta;min-width:0}
+.lbl{display:flex;align-items:center;gap:6px}
+.lbl label{font-weight:550;font-size:13px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:0;transition:opacity .15s}
+.row.mod .dot{opacity:1}
+.hint{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+input.hex{grid-area:hex;width:100%;background:var(--field);border:1px solid var(--line);border-radius:8px;font-family:var(--f-mono);font-size:12px;padding:6px 8px;text-transform:lowercase}
+input.hex:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+input.hex.bad{border-color:var(--bad);box-shadow:0 0 0 3px color-mix(in srgb,var(--bad) 18%,transparent)}
+.sub{grid-area:sub;display:flex;align-items:center;gap:6px;min-width:0}
+.sub small{font-family:var(--f-mono);font-size:11px;color:var(--muted);width:34px;text-align:right;flex:none}
+.tiny{width:26px;height:26px;border-radius:7px;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;flex:none;transition:background .15s,color .15s,opacity .15s}
+.tiny:hover{background:var(--field);color:var(--fg)}
+.tiny svg{width:14px;height:14px}
+.row:not(.mod) .reset{opacity:0;pointer-events:none}
+
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;min-width:0;height:18px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:99px;background:linear-gradient(90deg,transparent,var(--track,var(--accent))),repeating-conic-gradient(#8885 0 25%,transparent 0 50%) 0 0/6px 6px;box-shadow:inset 0 0 0 1px rgba(127,127,127,.25)}
+input[type=range]::-moz-range-track{height:6px;border-radius:99px;background:linear-gradient(90deg,transparent,var(--track,var(--accent))),repeating-conic-gradient(#8885 0 25%,transparent 0 50%) 0 0/6px 6px;box-shadow:inset 0 0 0 1px rgba(127,127,127,.25)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--line-strong);margin-top:-4px;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid var(--line-strong);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.wp{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 8px 8px}
+.wp label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.wp input,.wp select{width:100%;height:34px;background:var(--field);border:1px solid var(--line);border-radius:8px;font-family:var(--f-mono);font-size:12px;padding:0 8px}
+
+/* ---------- Stage ---------- */
+.stage{min-width:0;display:flex;flex-direction:column;gap:16px}
+.canvas{border-radius:var(--r);border:1px solid var(--line);padding:24px 16px 18px;
+  background:radial-gradient(var(--dots) 1px,transparent 1.2px) 0 0/16px 16px,var(--panel-2)}
+.canvas-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 4px 18px}
+.canvas-head h2{margin:0;font-size:15px;font-weight:650}
+.canvas-head p{margin:2px 0 0;font-size:12.5px;color:var(--muted)}
+.phones{display:flex;flex-wrap:wrap;gap:28px;justify-content:center}
+.dev{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:100%}
+.cap{color:var(--muted);font-size:12px}
+
+/* Phone frame */
+.phone{--p-fg:#fff;width:300px;max-width:100%;height:620px;border-radius:44px;padding:9px;background:#0b0d10;position:relative;
+  box-shadow:0 0 0 1px #2a2f36,0 30px 60px -20px rgba(0,0,0,.5),inset 0 0 0 1px #1d2126}
+.screen{width:100%;height:100%;border-radius:36px;overflow:hidden;display:flex;flex-direction:column;background:var(--p-bg);color:var(--p-fg);font-size:13px;position:relative}
+.island{position:absolute;top:17px;left:50%;transform:translateX(-50%);width:84px;height:22px;border-radius:99px;background:#000;z-index:3;pointer-events:none}
+.sbar{display:flex;justify-content:space-between;align-items:center;padding:11px 24px 4px;font-size:12px;font-weight:600;background:var(--p-menus);color:var(--p-fg);min-height:38px}
+.sbar svg{height:11px;width:auto}
+.sbar .ic{display:flex;gap:5px;align-items:center}
+.home{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:100px;height:4px;border-radius:99px;background:var(--p-fg);opacity:.5;pointer-events:none}
 [data-k]{cursor:pointer}
-[data-k].hl{outline:2px dashed var(--accent);outline-offset:1px}
-.bar{background:var(--p-menus);padding:10px 12px;display:flex;align-items:center;gap:10px;min-height:48px}
-.bar .t{font-weight:600;color:var(--p-title);font-size:15px;line-height:1.2}
+[data-k].hl{outline:2px dashed var(--accent);outline-offset:-2px}
+.bar{background:var(--p-menus);padding:8px 14px 10px;display:flex;align-items:center;gap:10px;min-height:48px}
+.bar .t{font-weight:600;color:var(--p-title);font-size:16px;line-height:1.2}
 .bar .s{font-size:11px;color:var(--p-secondary)}
-.ico{width:18px;height:18px;flex:none}
-.av{width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:600;font-size:14px;color:var(--p-fg);background:var(--p-av)}
-.av.sm{width:30px;height:30px;font-size:12px}
-.search{margin:8px 12px;background:var(--p-menus);border-radius:10px;padding:8px 12px;color:var(--p-secondary);font-size:13px}
+.ico{width:20px;height:20px;flex:none}
+.av{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:600;font-size:15px;color:var(--p-fg);background:var(--p-av)}
+.av.sm{width:32px;height:32px;font-size:12px}
+.search{margin:8px 12px 6px;background:var(--p-menus);border-radius:12px;padding:8px 12px;color:var(--p-secondary);font-size:13px;display:flex;gap:8px;align-items:center}
+.search svg{width:15px;height:15px}
 .list{flex:1;overflow:hidden;background:var(--p-bg)}
-.item{display:flex;gap:10px;padding:9px 12px;align-items:center}
+.item{display:flex;gap:11px;padding:9px 14px;align-items:center}
 .item.sel{background:var(--p-av)}
-.item .n{font-weight:500;display:flex;justify-content:space-between;gap:8px}
+.item .n{font-weight:550;display:flex;justify-content:space-between;gap:8px}
 .item .n em{font-style:normal;font-size:11px;color:var(--p-secondary);font-weight:400}
-.item .m{display:flex;justify-content:space-between;gap:8px;color:var(--p-secondary);font-size:12.5px}
+.item .m{display:flex;justify-content:space-between;gap:8px;color:var(--p-secondary);font-size:12.5px;margin-top:1px}
 .item .txt{flex:1;min-width:0}
 .item .m span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.badge{background:var(--p-accent);color:#fff;border-radius:999px;font-size:11px;min-width:18px;height:18px;padding:0 5px;display:grid;place-items:center;font-weight:600;flex:none}
-.fab{position:absolute;right:16px;bottom:16px;width:46px;height:46px;border-radius:50%;background:var(--p-accent);display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.35)}
-.fab svg{width:21px;height:21px}
+.badge{background:var(--p-accent);color:#fff;border-radius:999px;font-size:11px;min-width:19px;height:19px;padding:0 6px;display:grid;place-items:center;font-weight:600;flex:none}
+.fab{position:absolute;right:18px;bottom:26px;width:52px;height:52px;border-radius:16px;background:var(--p-accent);display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.fab svg{width:22px;height:22px}
 .conv{flex:1;position:relative;background:var(--p-wpbg);overflow:hidden}
-.conv .pat{position:absolute;inset:0;opacity:.07;background-image:radial-gradient(circle at 25% 25%,var(--p-fg) 2px,transparent 3px),radial-gradient(circle at 75% 75%,var(--p-fg) 2px,transparent 3px);background-size:var(--p-wpsize) var(--p-wpsize)}
+.conv .pat{position:absolute;inset:0;opacity:.08;pointer-events:none;
+  background-image:radial-gradient(circle at 25% 25%,var(--p-fg) 2px,transparent 3px),radial-gradient(circle at 75% 75%,var(--p-fg) 2px,transparent 3px);background-size:var(--p-wpsize) var(--p-wpsize)}
 .conv .tint{position:absolute;inset:0;background:var(--p-wptint);pointer-events:none}
-.msgs{position:absolute;inset:0;padding:10px 10px;display:flex;flex-direction:column;gap:6px;justify-content:flex-end}
-.date{align-self:center;background:var(--p-secv);color:var(--p-fg);font-size:11px;padding:2px 10px;border-radius:999px}
-.sys{align-self:center;color:var(--p-accentv);font-size:12px}
-.b{max-width:80%;padding:6px 10px;border-radius:14px;position:relative}
-.b.r{align-self:flex-start;background:var(--p-recv);border-bottom-left-radius:4px}
-.b.s{align-self:flex-end;background:var(--p-sent);border-bottom-right-radius:4px}
+.msgs{position:absolute;inset:0;padding:12px 10px;display:flex;flex-direction:column;gap:6px;justify-content:flex-end}
+.date{align-self:center;background:var(--p-secv);color:var(--p-fg);font-size:11px;padding:3px 11px;border-radius:999px}
+.sys{align-self:center;color:var(--p-accentv);font-size:12px;display:flex;gap:5px;align-items:center}
+.sys svg{width:12px;height:12px}
+.b{max-width:80%;padding:7px 11px;border-radius:16px;position:relative;line-height:1.35}
+.b.r{align-self:flex-start;background:var(--p-recv);border-bottom-left-radius:5px}
+.b.s{align-self:flex-end;background:var(--p-sent);border-bottom-right-radius:5px}
 .b small{display:block;text-align:right;font-size:10px;color:var(--p-secondary);margin-top:2px}
 .b a{color:var(--p-accent);text-decoration:underline;text-underline-offset:2px}
-.q{border-radius:8px;padding:4px 8px;margin:-1px -4px 5px;font-size:12px}
+.q{border-radius:9px;padding:4px 8px;margin:-2px -5px 5px;font-size:12px}
 .q.r{background:var(--p-recvr)}.q.s{background:var(--p-sentr)}
 .q b{display:block;font-size:11px;color:var(--p-accent);font-weight:600}
-.input{background:var(--p-menus);padding:9px 10px;display:flex;gap:8px;align-items:center}
-.input .f{flex:1;background:var(--p-bg);border-radius:18px;padding:7px 12px;color:var(--p-secondary)}
-.send{width:32px;height:32px;border-radius:50%;background:var(--p-accent);display:grid;place-items:center;flex:none}
-.out{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
-@media (max-width:700px){.out{grid-template-columns:minmax(0,1fr)}}
-.out h2{font-family:var(--f-head);font-size:15px;margin:0 0 4px}
-.out p{margin:0 0 8px;color:var(--muted);font-size:12.5px}
-textarea{width:100%;height:290px;resize:vertical;background:var(--field);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:10px;font-family:var(--f-mono);font-size:12px;line-height:1.5}
-.btns{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
-.primary{background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:8px 14px;font-weight:600}
-.ghost{background:transparent;border:1px solid var(--line);border-radius:8px;padding:7px 14px}
-.status{font-size:12px;color:var(--muted)}
-.note{font-size:12px;color:var(--muted);max-width:75ch}
+.input{background:var(--p-menus);padding:9px 10px 22px;display:flex;gap:8px;align-items:center}
+.input .f{flex:1;background:var(--p-bg);border-radius:18px;padding:8px 13px;color:var(--p-secondary)}
+.send{width:34px;height:34px;border-radius:50%;background:var(--p-accent);display:grid;place-items:center;flex:none}
+
+/* ---------- Readability ---------- */
+.panel{padding:16px}
+.panel-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:12px}
+.panel-head h2{margin:0;font-size:15px;font-weight:650}
+.panel-head p{margin:2px 0 0;font-size:12.5px;color:var(--muted)}
+.score{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
+.score.warn{background:var(--warn-soft);color:var(--warn)}
+.ct-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.ct{display:flex;align-items:center;gap:10px;text-align:left;padding:8px 10px;border-radius:11px;border:1px solid var(--line);background:var(--panel-2);min-width:0;transition:border-color .15s}
+.ct:hover{border-color:var(--line-strong)}
+.ct-s{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;font-weight:650;font-size:15px;flex:none;box-shadow:inset 0 0 0 1px rgba(127,127,127,.25)}
+.ct-l{flex:1;min-width:0;font-size:12.5px;line-height:1.3}
+.ct-l small{display:block;font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-top:2px}
+.ct-g{font-size:11px;font-weight:650;padding:2px 7px;border-radius:6px;background:var(--ok-soft);color:var(--ok);flex:none}
+.ct.warn .ct-g{background:var(--warn-soft);color:var(--warn)}
+
+/* ---------- Export / import ---------- */
+.out{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.out{grid-template-columns:minmax(0,1fr)}}
+.out .panel{display:flex;flex-direction:column;min-width:0}
+.code{margin:0;flex:1;min-height:300px;max-height:420px;overflow:auto;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-family:var(--f-mono);font-size:12px;line-height:1.65;white-space:pre;tab-size:2}
+.yk{color:var(--accent)}
+.ys{color:var(--fg)}
+.yn{color:var(--warn)}
+.ysw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-left:7px;vertical-align:-1px;box-shadow:inset 0 0 0 1px rgba(127,127,127,.4);background:linear-gradient(var(--c),var(--c)),repeating-conic-gradient(#8885 0 25%,transparent 0 50%) 0 0/5px 5px}
+.btns{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
+.drop{position:relative;flex:1;display:flex;flex-direction:column;border:1.5px dashed var(--line-strong);border-radius:10px;background:var(--field);transition:border-color .15s,background .15s;min-height:300px}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop textarea{flex:1;width:100%;resize:vertical;min-height:220px;border:0;background:transparent;padding:12px 14px;font-family:var(--f-mono);font-size:12px;line-height:1.6;outline:none}
+.drop .dz{display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);flex-wrap:wrap}
+.drop .dz svg{width:16px;height:16px}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font-weight:550;text-decoration:underline;text-underline-offset:2px}
+.note{font-size:12px;color:var(--muted);max-width:80ch;margin:4px 4px 0}
+kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--panel)}
+
+/* ---------- Floating bits ---------- */
+.tip{position:fixed;z-index:50;pointer-events:none;display:flex;align-items:center;gap:8px;padding:6px 10px 6px 7px;border-radius:9px;
+  background:#0f1720;color:#e6edf3;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);white-space:nowrap}
+.tip i{width:16px;height:16px;border-radius:5px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);background:linear-gradient(var(--c),var(--c)),repeating-conic-gradient(#8885 0 25%,transparent 0 50%) 0 0/6px 6px}
+.tip code{background:none;padding:0;color:#8b9aa8}
+.toasts{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:max-content;max-width:calc(100vw - 32px)}
+.toast{background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:11px;font-size:13px;font-weight:500;box-shadow:0 10px 30px rgba(0,0,0,.25);animation:tin .22s ease-out}
+.toast.err{background:var(--bad);color:#fff}
+@keyframes tin{from{opacity:0;transform:translateY(8px) scale(.97)}}
+
+@media (max-width:640px){
+  .brand .pill,.lbl-text{display:none}
+  .actions{width:100%}
+  .name{flex:1}
+  .name input{width:100%}
+  .name span{display:none}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <div>
-    <h1>SimpleX Theme Creator</h1>
-    <p>Pick a color for each part of the app, see it on a chat list and a conversation straight away, then copy the <code>.theme</code> file and import it in SimpleX Chat.</p>
+
+<header class="appbar">
+  <div class="in">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+      <b>SimpleX Theme Creator</b><span class="pill">Unofficial</span>
+    </div>
+    <div class="actions">
+      <label class="name" title="Theme name, used for the file name"><input id="tname" spellcheck="false" aria-label="Theme name" placeholder="mytheme"><span>.theme</span></label>
+      <div class="grp">
+        <button class="ibtn" id="undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg></button>
+        <button class="ibtn" id="redo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 000 10h3"/></svg></button>
+      </div>
+      <button class="ibtn" id="uitheme" aria-label="Editor appearance"></button>
+      <button class="btn" id="share" title="Copy a link that opens this theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.7-1.7"/></svg><span class="lbl-text">Share link</span></button>
+      <button class="btn primary" id="dl-top" title="Download .theme (Ctrl+S)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="lbl-text">Download</span></button>
+    </div>
   </div>
-  <div class="presets" id="presets"><span>Start from</span></div>
 </header>
 
-<div class="main">
-  <aside class="controls" id="controls">
-    <div class="base" role="group" aria-label="Base theme" id="base"></div>
-    <div id="groups"></div>
-    <h2>Wallpaper</h2>
-    <div id="wpcolors"></div>
-    <div class="wprow">
-      <div><label for="wpscale">Scale</label><input class="num" id="wpscale" type="number" step="0.1" min="0.2" max="5"></div>
-      <div><label for="wptype">Scale type</label>
-        <select id="wptype"><option>fill</option><option>fit</option><option>repeat</option></select></div>
+<main class="main">
+  <aside class="controls" id="controls" aria-label="Theme colors">
+    <div class="card start">
+      <section>
+        <p class="eyebrow">Base theme</p>
+        <div class="seg" role="group" aria-label="Base theme" id="base"></div>
+        <p class="help">Sets the text color and the defaults the app falls back on.</p>
+      </section>
+      <section>
+        <p class="eyebrow">Start from a preset</p>
+        <div class="presets" id="presets"></div>
+      </section>
+      <section>
+        <p class="eyebrow">Generate from one color</p>
+        <div class="gen">
+          <div class="sw" style="width:42px;min-height:34px;flex:none"><i id="gen-sw"></i><input type="color" id="gen-c" value="#4fd1df" aria-label="Accent color to generate from"></div>
+          <button class="btn sm" id="gen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>Generate</button>
+          <button class="btn sm" id="rand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>Surprise me</button>
+        </div>
+        <p class="help">Builds a full palette around the color, for the selected base.</p>
+      </section>
     </div>
+    <div id="groups" style="display:contents"></div>
   </aside>
 
   <section class="stage">
-    <div class="phones" id="preview">
-      <div>
-        <div class="phone" aria-label="Chat list preview">
-          <div class="bar" data-k="menus"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="var(--p-accent)" stroke-width="2" data-k="accent"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><div class="t" data-k="title">Your chats</div><span style="flex:1"></span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="var(--p-accent)" stroke-width="2" data-k="accent"><path d="M12 5v14M5 12h14"/></svg></div>
-          <div class="search" data-k="secondary">Search or paste SimpleX link</div>
-          <div class="list">
-            <div class="item"><div class="av">A</div><div class="txt"><div class="n">Anna Kovács <em data-k="secondary">21:40</em></div><div class="m"><span>Let me know what you think</span><b class="badge" data-k="accent">2</b></div></div></div>
-            <div class="item sel" data-k="accentVariant2"><div class="av" style="background:var(--p-accentv)" data-k="accentVariant">D</div><div class="txt"><div class="n">Dev group <em data-k="secondary">20:12</em></div><div class="m"><span>Marek: tint looks great on black</span></div></div></div>
-            <div class="item"><div class="av">P</div><div class="txt"><div class="n">Private notes <em data-k="secondary">Wed</em></div><div class="m"><span>Everything stays on your device</span></div></div></div>
-            <div class="item"><div class="av">T</div><div class="txt"><div class="n">Bob <em data-k="secondary">Tue</em></div><div class="m"><span>See you at the meetup</span></div></div></div>
-            <div class="item"><div class="av">N</div><div class="txt"><div class="n">Alice <em data-k="secondary">Mon</em></div><div class="m"><span>Thanks, I'll try it tonight</span><b class="badge" data-k="accent">1</b></div></div></div>
-            <div class="item"><div class="av">S</div><div class="txt"><div class="n">Server admins <em data-k="secondary">Sun</em></div><div class="m"><span>SMP relay updated to the latest</span></div></div></div>
-          </div>
-          <div class="fab" data-k="accent"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg></div>
-        </div>
-        <div class="cap">Chat list. Click any part to jump to its color.</div>
+    <div class="canvas">
+      <div class="canvas-head">
+        <div><h2>Live preview</h2><p>Hover an element to see its color. Click it to edit.</p></div>
       </div>
-      <div>
-        <div class="phone" aria-label="Conversation preview">
-          <div class="bar" data-k="menus"><div class="av sm">A</div><div><div class="t" data-k="title">Anna Kovács</div><div class="s" data-k="secondary">connected</div></div></div>
-          <div class="conv" data-k="wpBackground">
-            <div class="pat"></div><div class="tint" data-k="wpTint"></div>
-            <div class="msgs">
-              <div class="date" data-k="secondaryVariant">Thursday</div>
-              <div class="sys" data-k="accentVariant">e2e encrypted</div>
-              <div class="b r" data-k="receivedMessage">Does the new theme feel right?<small>21:38</small></div>
-              <div class="b s" data-k="sentMessage"><div class="q s" data-k="sentReply"><b>Anna</b>Does the new theme feel right?</div>Yes, the accent works. Try <a data-k="accent">simplex.chat</a><small>21:39 ✓✓</small></div>
-              <div class="b r" data-k="receivedMessage"><div class="q r" data-k="receivedReply"><b>You</b>Yes, the accent works</div>Great, I'll export it<small>21:40</small></div>
+      <div class="phones" id="preview">
+        <div class="dev">
+          <div class="phone" aria-label="Chat list preview"><div class="island"></div><div class="screen">
+            <div class="sbar" data-k="menus"><span>9:41</span><span class="ic"><svg viewBox="0 0 18 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="6" rx="1"/><rect x="10" y="2.5" width="3" height="8.5" rx="1"/><rect x="15" y="0" width="3" height="11" rx="1"/></svg><svg viewBox="0 0 25 12" fill="none" stroke="currentColor"><rect x=".5" y=".5" width="21" height="11" rx="3"/><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="currentColor" stroke="none"/><path d="M23.5 4v4" stroke-width="1.6" stroke-linecap="round"/></svg></span></div>
+            <div class="bar" data-k="menus"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="var(--p-accent)" stroke-width="2" data-k="accent"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><div class="t" data-k="title">Your chats</div><span style="flex:1"></span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="var(--p-accent)" stroke-width="2" stroke-linecap="round" data-k="accent"><path d="M12 5v14M5 12h14"/></svg></div>
+            <div class="search" data-k="secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Search or paste SimpleX link</div>
+            <div class="list" data-k="background">
+              <div class="item"><div class="av" data-k="accentVariant2">A</div><div class="txt"><div class="n">Anna Kovács <em data-k="secondary">21:40</em></div><div class="m"><span>Let me know what you think</span><b class="badge" data-k="accent">2</b></div></div></div>
+              <div class="item sel" data-k="accentVariant2"><div class="av" style="background:var(--p-accentv)" data-k="accentVariant">D</div><div class="txt"><div class="n">Dev group <em data-k="secondary">20:12</em></div><div class="m"><span>Marek: tint looks great on black</span></div></div></div>
+              <div class="item"><div class="av" data-k="accentVariant2">P</div><div class="txt"><div class="n">Private notes <em data-k="secondary">Wed</em></div><div class="m"><span>Everything stays on your device</span></div></div></div>
+              <div class="item"><div class="av" data-k="accentVariant2">B</div><div class="txt"><div class="n">Bob <em data-k="secondary">Tue</em></div><div class="m"><span>See you at the meetup</span></div></div></div>
+              <div class="item"><div class="av" data-k="accentVariant2">A</div><div class="txt"><div class="n">Alice <em data-k="secondary">Mon</em></div><div class="m"><span>Thanks, I'll try it tonight</span><b class="badge" data-k="accent">1</b></div></div></div>
+              <div class="item"><div class="av" data-k="accentVariant2">S</div><div class="txt"><div class="n">Server admins <em data-k="secondary">Sun</em></div><div class="m"><span>SMP relay updated to the latest</span></div></div></div>
             </div>
-          </div>
-          <div class="input" data-k="menus"><div class="f" data-k="secondary">Message</div><div class="send" data-k="accent"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div></div>
+            <div class="fab" data-k="accent"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg></div>
+            <div class="home"></div>
+          </div></div>
+          <div class="cap">Chat list</div>
         </div>
-        <div class="cap">Conversation with wallpaper and tint.</div>
+        <div class="dev">
+          <div class="phone" aria-label="Conversation preview"><div class="island"></div><div class="screen">
+            <div class="sbar" data-k="menus"><span>9:41</span><span class="ic"><svg viewBox="0 0 18 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="6" rx="1"/><rect x="10" y="2.5" width="3" height="8.5" rx="1"/><rect x="15" y="0" width="3" height="11" rx="1"/></svg><svg viewBox="0 0 25 12" fill="none" stroke="currentColor"><rect x=".5" y=".5" width="21" height="11" rx="3"/><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="currentColor" stroke="none"/><path d="M23.5 4v4" stroke-width="1.6" stroke-linecap="round"/></svg></span></div>
+            <div class="bar" data-k="menus"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="var(--p-accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" data-k="accent"><path d="M15 5l-7 7 7 7"/></svg><div class="av sm" data-k="accentVariant2">A</div><div><div class="t" data-k="title">Anna Kovács</div><div class="s" data-k="secondary">connected</div></div></div>
+            <div class="conv" data-k="wpBackground">
+              <div class="pat"></div><div class="tint"></div>
+              <div class="msgs">
+                <div class="date" data-k="secondaryVariant">Thursday</div>
+                <div class="sys" data-k="accentVariant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>e2e encrypted</div>
+                <div class="b r" data-k="receivedMessage">Does the new theme feel right?<small data-k="secondary">21:38</small></div>
+                <div class="b s" data-k="sentMessage"><div class="q s" data-k="sentReply"><b>Anna</b>Does the new theme feel right?</div>Yes, the accent works. Try <a data-k="accent">simplex.chat</a><small data-k="secondary">21:39 ✓✓</small></div>
+                <div class="b r" data-k="receivedMessage"><div class="q r" data-k="receivedReply"><b>You</b>Yes, the accent works</div>Great, I'll export it<small data-k="secondary">21:40</small></div>
+              </div>
+            </div>
+            <div class="input" data-k="menus"><div class="f" data-k="secondary">Message</div><div class="send" data-k="accent"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div></div>
+            <div class="home"></div>
+          </div></div>
+          <div class="cap">Conversation with wallpaper and tint</div>
+        </div>
       </div>
+    </div>
+
+    <div class="card panel">
+      <div class="panel-head">
+        <div><h2>Readability</h2><p>Contrast of text against what it sits on. Click a row to edit that color.</p></div>
+        <span class="score" id="score"></span>
+      </div>
+      <div class="ct-grid" id="ct"></div>
     </div>
 
     <div class="out">
-      <div>
-        <h2>Your theme file</h2>
-        <p>Download it as <code>mytheme.theme</code> (or copy the text and save it yourself), then use Appearance → Import theme in SimpleX Chat.</p>
-        <textarea id="yaml" readonly spellcheck="false" aria-label="Theme file contents"></textarea>
-        <div class="btns"><button class="primary" id="copy">Copy theme</button><button class="ghost" id="dl">Download .theme</button><span class="status" id="status" role="status"></span></div>
+      <div class="card panel">
+        <div class="panel-head"><div><h2 id="fname">mytheme.theme</h2><p>Import it in SimpleX Chat under Appearance → Import theme.</p></div></div>
+        <pre class="code" id="yaml" aria-label="Theme file contents" tabindex="0"></pre>
+        <div class="btns">
+          <button class="btn primary" id="dl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Download .theme</button>
+          <button class="btn" id="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/></svg>Copy text</button>
+        </div>
       </div>
-      <div>
-        <h2>Import an existing theme</h2>
-        <p>Paste the contents of a <code>.theme</code> file to edit it here.</p>
-        <textarea id="imp" spellcheck="false" placeholder='base: "DARK"&#10;colors:&#10;  accent: "#ff81a1c1"&#10;  ...' aria-label="Paste theme to import"></textarea>
-        <div class="btns"><button class="ghost" id="apply">Load into editor</button><span class="status" id="istatus" role="status"></span></div>
+      <div class="card panel">
+        <div class="panel-head"><div><h2>Import a theme</h2><p>Drop a <code>.theme</code> file here or paste its contents.</p></div></div>
+        <div class="drop" id="drop">
+          <textarea id="imp" spellcheck="false" placeholder='base: "DARK"&#10;colors:&#10;  accent: "#ff81a1c1"&#10;  ...' aria-label="Paste theme to import"></textarea>
+          <div class="dz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>Drop a file, or <button class="linkbtn" id="pickfile">choose one</button><input type="file" id="file" accept=".theme,.yaml,.yml,.txt,text/plain" hidden></div>
+        </div>
+        <div class="btns"><button class="btn" id="apply">Load into editor</button></div>
       </div>
     </div>
-    <p class="note">The preview is a hand-built approximation of the SimpleX Chat screens, not rendered from the app's own code. Which preview element uses which color is based on how the app labels them and on community themes, so check an export once in the real app. Colors are stored as <code>#AARRGGBB</code>, the same as the app's theme files.</p>
+    <p class="note">The preview is a hand-built approximation of the SimpleX Chat screens, not rendered from the app's own code, so check an export once in the real app. Colors are stored as <code>#AARRGGBB</code>, the same as the app's theme files. Your work is saved in this browser automatically. Shortcuts: <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> redo, <kbd>Ctrl</kbd>+<kbd>S</kbd> download.</p>
   </section>
-</div>
-</div>
+</main>
+
+<div class="tip" id="tip" hidden></div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 
 <script>
-(function(){
-var COLORS=[
- {g:'Brand',items:[
-  ['accent','Accent','Buttons, links, badges, active icons'],
-  ['accentVariant','Accent variant','Secondary highlights, system text'],
-  ['accentVariant2','Accent variant 2','Selected rows and avatars']]},
- {g:'Text and icons',items:[
-  ['title','Title','Screen titles and chat names'],
-  ['secondary','Secondary','Hints, timestamps, placeholder text'],
-  ['secondaryVariant','Secondary variant','Date chips and quiet fills']]},
- {g:'Surfaces',items:[
-  ['background','Background','Main screen background'],
-  ['menus','Menus','Top bar, bottom bar, input bar']]},
- {g:'Messages',items:[
-  ['sentMessage','Sent message','Your message bubbles'],
-  ['sentReply','Sent reply','Quote inside your replies'],
-  ['receivedMessage','Received message','Their message bubbles'],
-  ['receivedReply','Received reply','Quote inside their replies']]}
+(() => {
+'use strict';
+/* ================= Data ================= */
+const COLORS = [
+  {g:'Brand', items:[
+    ['accent','Accent','Buttons, links, badges, active icons'],
+    ['accentVariant','Accent variant','Secondary highlights, system text'],
+    ['accentVariant2','Accent variant 2','Selected rows and avatars']]},
+  {g:'Text and icons', items:[
+    ['title','Title','Screen titles and chat names'],
+    ['secondary','Secondary','Hints, timestamps, placeholders'],
+    ['secondaryVariant','Secondary variant','Date chips and quiet fills']]},
+  {g:'Surfaces', items:[
+    ['background','Background','Main screen background'],
+    ['menus','Menus','Top bar, bottom bar, input bar']]},
+  {g:'Messages', items:[
+    ['sentMessage','Sent message','Your message bubbles'],
+    ['sentReply','Sent reply','Quote inside your replies'],
+    ['receivedMessage','Received message','Their message bubbles'],
+    ['receivedReply','Received reply','Quote inside their replies']]},
+  {g:'Wallpaper', wp:true, items:[
+    ['wpBackground','Wallpaper background','Fill behind the pattern'],
+    ['wpTint','Wallpaper tint','Color laid over the wallpaper']]}
 ];
-var WPC=[['wpBackground','Wallpaper background','Fill color behind the pattern'],['wpTint','Wallpaper tint','Color laid over the wallpaper']];
-var PRESETS={
- 'SimpleX Dark':{base:'DARK',c:{accent:'#ff70f0f9',accentVariant:'#ff1298a5',secondary:'#ff8b8786',secondaryVariant:'#ff2c464d',background:'#ff111528',menus:'#ff121c37',title:'#ff267be5',accentVariant2:'#ff172941',sentMessage:'#ff59586e',sentReply:'#ff113457',receivedMessage:'#ff25283a',receivedReply:'#ff36394a',wpBackground:'#ff111528',wpTint:'#00ffffff'},scale:1,type:'fill'},
- 'Light starter':{base:'LIGHT',c:{accent:'#ff0088ff',accentVariant:'#ff0070d8',secondary:'#ff6b7280',secondaryVariant:'#ffd7e6f5',background:'#ffffffff',menus:'#fff4f6f8',title:'#ff0053d0',accentVariant2:'#ffe3f0ff',sentMessage:'#ffd2e8ff',sentReply:'#ffb5d7f7',receivedMessage:'#ffeceff2',receivedReply:'#ffdde2e8',wpBackground:'#ffffffff',wpTint:'#00ffffff'},scale:1,type:'fill'}
+const ALL = COLORS.flatMap(g => g.items);
+const KEYS = ALL.map(i => i[0]);
+const LABEL = Object.fromEntries(ALL.map(i => [i[0], i[1]]));
+const EXPORT_ORDER = ['accent','accentVariant','secondary','secondaryVariant','background','menus','title','accentVariant2','sentMessage','sentReply','receivedMessage','receivedReply'];
+const BASES = [['DARK','Dark'],['LIGHT','Light'],['SIMPLEX','SimpleX'],['BLACK','Black']];
+const MAP = {accent:'--p-accent',accentVariant:'--p-accentv',accentVariant2:'--p-av',secondary:'--p-secondary',secondaryVariant:'--p-secv',title:'--p-title',background:'--p-bg',menus:'--p-menus',sentMessage:'--p-sent',sentReply:'--p-sentr',receivedMessage:'--p-recv',receivedReply:'--p-recvr',wpBackground:'--p-wpbg',wpTint:'--p-wptint'};
+const STORE = 'sxtc:v2', UISTORE = 'sxtc:ui';
+
+/* ================= Color math ================= */
+function parse(s){
+  s = String(s ?? '').trim().replace(/^["']|["']$/g,'').replace(/^#/,'');
+  if (/^[0-9a-f]{3}$/i.test(s)) s = s.split('').map(c => c + c).join('');
+  if (s.length === 6) s = 'ff' + s;
+  if (!/^[0-9a-f]{8}$/i.test(s)) return null;
+  s = s.toLowerCase();
+  return {a:parseInt(s.slice(0,2),16), r:parseInt(s.slice(2,4),16), g:parseInt(s.slice(4,6),16), b:parseInt(s.slice(6,8),16), hex:'#'+s.slice(2)};
+}
+const h2 = n => Math.round(n).toString(16).padStart(2,'0');
+const fmt = (a, hex) => '#' + h2(a) + hex.slice(1).toLowerCase();
+const norm = s => { const p = parse(s); return p ? fmt(p.a, p.hex) : null; };
+const rgba = s => { const p = parse(s); return p ? `rgba(${p.r},${p.g},${p.b},${(p.a/255).toFixed(3)})` : 'transparent'; };
+function hsl2hex(h, s, l){
+  s /= 100; l /= 100;
+  const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  return '#' + h2(f(0) * 255) + h2(f(8) * 255) + h2(f(4) * 255);
+}
+function hex2hsl(hex){
+  const p = parse(hex); let r = p.r/255, g = p.g/255, b = p.b/255;
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx - mn; let h = 0;
+  const l = (mx + mn) / 2, s = d === 0 ? 0 : d / (1 - Math.abs(2*l - 1));
+  if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return {h:(h * 60 + 360) % 360, s:s * 100, l:l * 100};
+}
+const blend = (top, under) => { const a = top.a / 255; return {r:top.r*a + under.r*(1-a), g:top.g*a + under.g*(1-a), b:top.b*a + under.b*(1-a)}; };
+const lum = c => { const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }; return .2126*f(c.r) + .7152*f(c.g) + .0722*f(c.b); };
+const ratio = (x, y) => { const a = lum(x), b = lum(y); return (Math.max(a,b) + .05) / (Math.min(a,b) + .05); };
+const solidCss = c => `rgb(${Math.round(c.r)},${Math.round(c.g)},${Math.round(c.b)})`;
+
+/* ================= Palette generator ================= */
+function generate(accentHex, base){
+  const {h, s} = hex2hsl(accentHex);
+  const H = (hh, ss, ll) => '#ff' + hsl2hex(hh, Math.max(0, Math.min(100, ss)), ll).slice(1);
+  const acc = '#ff' + accentHex.replace('#','').slice(-6).toLowerCase();
+  let c;
+  if (base === 'LIGHT') {
+    c = {accent:acc, accentVariant:H(h, Math.min(s,85), 38), accentVariant2:H(h, 60, 93), title:H(h, Math.min(s,80), 32),
+      secondary:H(h, 8, 44), secondaryVariant:H(h, 30, 88), background:H(h, 25, 99), menus:H(h, 25, 96),
+      sentMessage:H(h, 60, 89), sentReply:H(h, 50, 81), receivedMessage:H(h, 14, 94), receivedReply:H(h, 14, 87)};
+  } else {
+    const blk = base === 'BLACK', sx = base === 'SIMPLEX', bh = sx ? 228 : h;
+    c = {accent:acc, accentVariant:H(h, Math.min(s,80), 42), accentVariant2:H(bh, 35, blk ? 10 : 17), title:H(h, Math.min(s,85), 66),
+      secondary:H(h, 8, 60), secondaryVariant:H(bh, 25, blk ? 14 : 22),
+      background: blk ? '#ff000000' : H(bh, sx ? 40 : 28, sx ? 11 : 8),
+      menus: blk ? '#ff0b0b0c' : H(bh, sx ? 40 : 28, sx ? 15 : 12),
+      sentMessage:H(h, 30, blk ? 20 : 26), sentReply:H(h, 30, blk ? 14 : 19),
+      receivedMessage:H(bh, 15, blk ? 11 : 17), receivedReply:H(bh, 15, blk ? 17 : 23)};
+  }
+  c.wpBackground = c.background; c.wpTint = '#00ffffff';
+  return c;
+}
+
+/* ================= Presets ================= */
+const PRESETS = [
+  {name:'SimpleX Dark', sub:'Dark', base:'DARK', c:{accent:'#ff70f0f9',accentVariant:'#ff1298a5',secondary:'#ff8b8786',secondaryVariant:'#ff2c464d',background:'#ff111528',menus:'#ff121c37',title:'#ff267be5',accentVariant2:'#ff172941',sentMessage:'#ff59586e',sentReply:'#ff113457',receivedMessage:'#ff25283a',receivedReply:'#ff36394a',wpBackground:'#ff111528',wpTint:'#00ffffff'}},
+  {name:'Daylight', sub:'Light', base:'LIGHT', c:{accent:'#ff0088ff',accentVariant:'#ff0070d8',secondary:'#ff6b7280',secondaryVariant:'#ffd7e6f5',background:'#ffffffff',menus:'#fff4f6f8',title:'#ff0053d0',accentVariant2:'#ffe3f0ff',sentMessage:'#ffd2e8ff',sentReply:'#ffb5d7f7',receivedMessage:'#ffeceff2',receivedReply:'#ffdde2e8',wpBackground:'#ffffffff',wpTint:'#00ffffff'}},
+  {name:'Midnight', sub:'Black · AMOLED', gen:['#4fd1df','BLACK']},
+  {name:'Deep Sea', sub:'SimpleX', gen:['#70f0f9','SIMPLEX']},
+  {name:'Forest', sub:'Dark', gen:['#5fd38d','DARK']},
+  {name:'Ember', sub:'Dark', gen:['#ff8a4c','DARK']},
+  {name:'Lavender', sub:'Light', gen:['#7c4dff','LIGHT']},
+  {name:'Rose', sub:'Light', gen:['#e0457b','LIGHT']}
+].map(p => p.gen ? {name:p.name, sub:p.sub, base:p.gen[1], c:generate(p.gen[0], p.gen[1])} : p)
+ .map(p => Object.assign({scale:1, type:'fill'}, p));
+
+/* ================= State ================= */
+const $ = id => document.getElementById(id);
+const clone = o => JSON.parse(JSON.stringify(o));
+let S = {name:'mytheme', base:'DARK', c:{}, scale:1, type:'fill'};
+let origin = null;
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
 };
-var BASES=['DARK','LIGHT'];
-var S={base:'DARK',c:{},scale:1,type:'fill'};
+function setState(p, {keepName = true, asOrigin = true} = {}){
+  const name = keepName ? S.name : (p.name || S.name);
+  S = {name, base:p.base, c:Object.assign({}, S.c, p.c), scale:p.scale ?? 1, type:p.type ?? 'fill'};
+  if (asOrigin) origin = clone(S);
+  render({full:true});
+}
 
-function $(id){return document.getElementById(id)}
-function parse(s){s=String(s||'').trim().replace(/^#/,'').replace(/^["']|["']$/g,'');if(s.length===6)s='ff'+s;if(!/^[0-9a-fA-F]{8}$/.test(s))return null;return{a:parseInt(s.slice(0,2),16),hex:'#'+s.slice(2).toLowerCase()}}
-function fmt(a,hex){return '#'+a.toString(16).padStart(2,'0')+hex.slice(1).toLowerCase()}
-function css(s){var p=parse(s);if(!p)return'transparent';var h=p.hex;return 'rgba('+parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+','+parseInt(h.slice(5,7),16)+','+(p.a/255).toFixed(3)+')'}
-function load(p){S.base=p.base;S.c=Object.assign({},p.c);S.scale=p.scale;S.type=p.type;render(true)}
+/* ================= History ================= */
+let hist = [], hi = -1, ct;
+function commit(){
+  clearTimeout(ct);
+  const s = JSON.stringify(S);
+  if (hist[hi] === s) return;
+  hist = hist.slice(0, hi + 1); hist.push(s);
+  if (hist.length > 150) hist.shift();
+  hi = hist.length - 1; updHist();
+}
+const commitSoon = () => { clearTimeout(ct); ct = setTimeout(commit, 350); };
+function step(d){
+  commit();
+  const n = hi + d; if (n < 0 || n >= hist.length) return;
+  hi = n; S = JSON.parse(hist[hi]); render({full:true, noCommit:true}); updHist();
+}
+function updHist(){ $('undo').disabled = hi <= 0; $('redo').disabled = hi >= hist.length - 1; }
 
-/* build controls */
-function row(k,n,h){
-  var d=document.createElement('div');d.className='row';d.id='row-'+k;
-  d.innerHTML='<div class="top"><label for="hex-'+k+'">'+n+'</label></div><div class="hint">'+h+'</div>'+
-   '<div class="ctl"><div class="sw"><i></i><input type="color" id="pick-'+k+'" aria-label="'+n+' color"></div>'+
-   '<div class="alpha"><input type="range" min="0" max="255" id="al-'+k+'" aria-label="'+n+' opacity"><small id="alv-'+k+'"></small></div>'+
-   '<input class="hex" id="hex-'+k+'" maxlength="9" spellcheck="false"></div>';
-  d.addEventListener('mouseenter',function(){hl(k,true)});d.addEventListener('mouseleave',function(){hl(k,false)});
-  var pick=d.querySelector('#pick-'+k),al=d.querySelector('#al-'+k),hex=d.querySelector('#hex-'+k);
-  pick.addEventListener('input',function(){var p=parse(S.c[k]);S.c[k]=fmt(p.a,pick.value);render()});
-  al.addEventListener('input',function(){var p=parse(S.c[k]);S.c[k]=fmt(+al.value,p.hex);render()});
-  hex.addEventListener('input',function(){var p=parse(hex.value);if(p){S.c[k]=fmt(p.a,p.hex);render(false,k)}});
-  hex.addEventListener('blur',function(){render(true)});
+/* ================= Build controls ================= */
+const rows = {};
+const ICON = {
+  chev:'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+  eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5l4 4M3 21l3-1 10.5-10.5-2-2L4 18z"/><path d="M13 4l1.5-1.5a2.1 2.1 0 013 3L16 7"/></svg>',
+  reset:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 103-6.7L3 8"/><path d="M3 3v5h5"/></svg>'
+};
+const hasEye = 'EyeDropper' in window;
+function makeRow(k, n, h){
+  const d = document.createElement('div');
+  d.className = 'row'; d.id = 'row-' + k;
+  d.innerHTML = `<div class="sw"><i></i><input type="color" aria-label="${n} color"></div>
+    <div class="meta"><div class="lbl"><label for="hex-${k}">${n}</label><span class="dot" title="Changed from starting point"></span></div><div class="hint" title="${h}">${h}</div></div>
+    <input class="hex" id="hex-${k}" maxlength="9" spellcheck="false" autocomplete="off" aria-label="${n} hex, #AARRGGBB">
+    <div class="sub"><input type="range" min="0" max="255" aria-label="${n} opacity"><small></small>
+      ${hasEye ? `<button class="tiny eye" title="Pick from screen" aria-label="Pick ${n} from screen">${ICON.eye}</button>` : ''}
+      <button class="tiny reset" title="Reset to starting value" aria-label="Reset ${n}">${ICON.reset}</button></div>`;
+  const r = {el:d, sw:d.querySelector('.sw i'), pick:d.querySelector('input[type=color]'), al:d.querySelector('input[type=range]'), alv:d.querySelector('.sub small'), hex:d.querySelector('.hex')};
+  rows[k] = r;
+  d.addEventListener('mouseenter', () => hl(k, true));
+  d.addEventListener('mouseleave', () => hl(k, false));
+  r.pick.addEventListener('input', () => { S.c[k] = fmt(parse(S.c[k]).a, r.pick.value); render(); });
+  r.al.addEventListener('input', () => { S.c[k] = fmt(+r.al.value, parse(S.c[k]).hex); render(); });
+  r.hex.addEventListener('input', () => {
+    const v = norm(r.hex.value);
+    r.hex.classList.toggle('bad', !v);
+    if (v) { S.c[k] = v; render({skip:k}); }
+  });
+  r.hex.addEventListener('blur', () => { r.hex.classList.remove('bad'); render({noCommit:true}); });
+  r.hex.addEventListener('keydown', e => { if (e.key === 'Enter') r.hex.blur(); });
+  d.querySelector('.reset').addEventListener('click', () => { if (origin) { S.c[k] = origin.c[k]; render(); } });
+  const eye = d.querySelector('.eye');
+  if (eye) eye.addEventListener('click', async () => {
+    try { const res = await new EyeDropper().open(); S.c[k] = fmt(parse(S.c[k]).a, res.sRGBHex); render(); } catch(e) {}
+  });
   return d;
 }
-function hl(k,on){document.querySelectorAll('[data-k="'+k+'"]').forEach(function(e){e.classList.toggle('hl',on)})}
-var g=$('groups');
-COLORS.forEach(function(grp){var h=document.createElement('h2');h.textContent=grp.g;g.appendChild(h);grp.items.forEach(function(i){g.appendChild(row(i[0],i[1],i[2]))})});
-WPC.forEach(function(i){$('wpcolors').appendChild(row(i[0],i[1],i[2]))});
-var bb=$('base');BASES.forEach(function(b){var x=document.createElement('button');x.textContent=b[0]+b.slice(1).toLowerCase();x.dataset.b=b;x.addEventListener('click',function(){S.base=b;render()});bb.appendChild(x)});
-var ps=$('presets');Object.keys(PRESETS).forEach(function(n){var x=document.createElement('button');x.className='chip';x.textContent=n;x.addEventListener('click',function(){load(PRESETS[n])});ps.appendChild(x)});
-$('wpscale').addEventListener('input',function(){var v=parseFloat(this.value);if(v>0){S.scale=v;render(false)}});
-$('wptype').addEventListener('change',function(){S.type=this.value;render()});
+function hl(k, on){ document.querySelectorAll(`#preview [data-k="${k}"]`).forEach(e => e.classList.toggle('hl', on)); }
 
-/* preview -> control */
-$('preview').addEventListener('click',function(e){
-  var t=e.target.closest('[data-k]');if(!t)return;
-  var r=$('row-'+t.dataset.k);if(!r)return;
-  document.querySelectorAll('.row.active').forEach(function(x){x.classList.remove('active')});
-  r.classList.add('active');r.scrollIntoView({block:'center',behavior:'smooth'});
-  setTimeout(function(){r.classList.remove('active')},1800);
+const groupsEl = $('groups');
+COLORS.forEach((grp, gi) => {
+  const det = document.createElement('details');
+  det.className = 'card group'; det.open = gi === 0 || !matchMedia('(max-width:960px)').matches; det.id = 'grp-' + gi;
+  det.innerHTML = `<summary><h3>${grp.g}</h3><span class="strip">${grp.items.map(i => `<i data-strip="${i[0]}"></i>`).join('')}</span>${ICON.chev}</summary><div class="rows"></div>`;
+  const box = det.querySelector('.rows');
+  grp.items.forEach(i => box.appendChild(makeRow(...i)));
+  if (grp.wp) {
+    const wp = document.createElement('div'); wp.className = 'wp';
+    wp.innerHTML = `<div><label for="wpscale">Scale</label><input id="wpscale" type="number" step="0.1" min="0.2" max="5"></div>
+      <div><label for="wptype">Scale type</label><select id="wptype"><option>fill</option><option>fit</option><option>repeat</option></select></div>`;
+    det.appendChild(wp);
+  }
+  groupsEl.appendChild(det);
+});
+$('wpscale').addEventListener('input', e => { const v = parseFloat(e.target.value); if (v > 0) { S.scale = Math.min(5, v); render(); } });
+$('wpscale').addEventListener('blur', () => render({full:true, noCommit:true}));
+$('wptype').addEventListener('change', e => { S.type = e.target.value; render(); });
+
+const baseEl = $('base');
+BASES.forEach(([b, label]) => {
+  const x = document.createElement('button'); x.textContent = label; x.dataset.b = b;
+  x.addEventListener('click', () => { S.base = b; render(); });
+  baseEl.appendChild(x);
 });
 
-var MAP={accent:'--p-accent',accentVariant:'--p-accentv',accentVariant2:'--p-av',secondary:'--p-secondary',secondaryVariant:'--p-secv',title:'--p-title',background:'--p-bg',menus:'--p-menus',sentMessage:'--p-sent',sentReply:'--p-sentr',receivedMessage:'--p-recv',receivedReply:'--p-recvr',wpBackground:'--p-wpbg',wpTint:'--p-wptint'};
+const presetEl = $('presets');
+PRESETS.forEach(p => {
+  const x = document.createElement('button'); x.className = 'preset'; x.type = 'button';
+  x.innerHTML = `<span class="mini" style="background:${rgba(p.c.background)}"><i class="m1" style="background:${rgba(p.c.receivedMessage)}"></i><i class="m2" style="background:${rgba(p.c.sentMessage)}"></i><i class="m3" style="background:${rgba(p.c.accent)}"></i></span><span>${p.name}<small>${p.sub}</small></span>`;
+  x.addEventListener('click', () => { setState(p); toast(`Loaded ${p.name}`); });
+  p.el = x; presetEl.appendChild(x);
+});
 
-function render(full,skip){
-  var pv=$('preview');
-  Object.keys(MAP).forEach(function(k){pv.style.setProperty(MAP[k],css(S.c[k]))});
-  pv.style.setProperty('--p-fg',S.base==='LIGHT'?'#111418':'#ffffff');
-  pv.style.setProperty('--p-wpsize',Math.max(14,Math.round(36*S.scale))+'px');
-  Object.keys(MAP).forEach(function(k){
-    var p=parse(S.c[k]);if(!p)return;
-    var r=$('row-'+k);
-    r.querySelector('.sw i').style.background=css(S.c[k]);
-    r.querySelector('#pick-'+k).value=p.hex;
-    r.querySelector('#al-'+k).value=p.a;
-    r.querySelector('#alv-'+k).textContent=Math.round(p.a/2.55)+'%';
-    var hx=r.querySelector('#hex-'+k);
-    if(k!==skip&&document.activeElement!==hx)hx.value=S.c[k];
-  });
-  if(full){$('wpscale').value=S.scale;$('wptype').value=S.type}
-  bb.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.b===S.base)});
-  $('yaml').value=toYaml();
+/* Generator */
+const genC = $('gen-c');
+const genSw = () => $('gen-sw').style.setProperty('--c', genC.value);
+genC.addEventListener('input', genSw);
+$('gen').addEventListener('click', () => {
+  setState({base:S.base, c:generate(genC.value, S.base), scale:S.scale, type:S.type});
+  toast('Palette generated');
+});
+$('rand').addEventListener('click', () => {
+  const light = S.base === 'LIGHT';
+  const hex = hsl2hex(Math.random() * 360, 60 + Math.random() * 30, light ? 42 + Math.random() * 8 : 56 + Math.random() * 10);
+  genC.value = hex; genSw();
+  setState({base:S.base, c:generate(hex, S.base), scale:S.scale, type:S.type});
+});
+
+/* ================= Preview interaction ================= */
+const pv = $('preview'), tip = $('tip');
+function jump(k){
+  const r = rows[k]; if (!r) return;
+  const det = r.el.closest('details'); if (det) det.open = true;
+  document.querySelectorAll('.row.flash').forEach(x => x.classList.remove('flash'));
+  r.el.classList.add('flash');
+  r.el.scrollIntoView({block:'center', behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+  r.hex.focus({preventScroll:true});
+  setTimeout(() => r.el.classList.remove('flash'), 1800);
 }
+pv.addEventListener('click', e => { const t = e.target.closest('[data-k]'); if (t) { e.preventDefault(); jump(t.dataset.k); } });
+let hovK = null;
+pv.addEventListener('pointermove', e => {
+  if (e.pointerType === 'touch') return;
+  const t = e.target.closest('[data-k]');
+  const k = t && t.dataset.k;
+  if (k !== hovK) { if (hovK) hl(hovK, false); hovK = k; if (k) hl(k, true); }
+  if (!k) { tip.hidden = true; return; }
+  tip.innerHTML = `<i style="--c:${rgba(S.c[k])}"></i>${LABEL[k]} <code>${S.c[k]}</code>`;
+  tip.hidden = false;
+  const w = tip.offsetWidth, x = Math.min(e.clientX + 14, innerWidth - w - 8);
+  tip.style.left = x + 'px'; tip.style.top = (e.clientY + 18) + 'px';
+});
+pv.addEventListener('pointerleave', () => { tip.hidden = true; if (hovK) hl(hovK, false); hovK = null; });
+
+/* ================= Readability ================= */
+const PAIRS = [
+  {l:'Text on sent messages', fg:'TEXT', bg:'sent', min:4.5, jump:'sentMessage'},
+  {l:'Text on received messages', fg:'TEXT', bg:'recv', min:4.5, jump:'receivedMessage'},
+  {l:'Chat names on background', fg:'TEXT', bg:'bg', min:4.5, jump:'background'},
+  {l:'Title on menus', fg:'title', bg:'menus', min:4.5, jump:'title'},
+  {l:'Secondary text on background', fg:'secondary', bg:'bg', min:4.5, jump:'secondary'},
+  {l:'Accent on background', fg:'accent', bg:'bg', min:3, jump:'accent'},
+  {l:'Timestamps on sent messages', fg:'secondary', bg:'sent', min:3, jump:'secondary'}
+];
+const ctEl = $('ct');
+PAIRS.forEach(p => {
+  const b = document.createElement('button'); b.className = 'ct'; b.type = 'button';
+  b.innerHTML = `<span class="ct-s">Aa</span><span class="ct-l">${p.l}<small></small></span><span class="ct-g"></span>`;
+  b.addEventListener('click', () => jump(p.jump));
+  p.el = b; ctEl.appendChild(b);
+});
+function readability(){
+  const P = k => parse(S.c[k]) || {r:0,g:0,b:0,a:255};
+  const light = S.base === 'LIGHT';
+  const ground = light ? {r:255,g:255,b:255} : {r:0,g:0,b:0};
+  const text = light ? {r:17,g:20,b:24,a:255} : {r:255,g:255,b:255,a:255};
+  const bg = blend(P('background'), ground);
+  const L = {bg, menus:blend(P('menus'), bg)};
+  const wall = blend(P('wpTint'), blend(P('wpBackground'), bg));
+  L.sent = blend(P('sentMessage'), wall); L.recv = blend(P('receivedMessage'), wall);
+  let low = 0;
+  PAIRS.forEach(p => {
+    const under = L[p.bg];
+    const fg = p.fg === 'TEXT' ? blend(text, under) : blend(P(p.fg), under);
+    const r = ratio(fg, under);
+    const grade = r >= 7 ? 'AAA' : r >= 4.5 ? 'AA' : r >= 3 ? 'AA large' : 'Low';
+    const ok = r >= p.min; if (!ok) low++;
+    p.el.classList.toggle('warn', !ok);
+    const s = p.el.querySelector('.ct-s'); s.style.background = solidCss(under); s.style.color = solidCss(fg);
+    p.el.querySelector('small').textContent = r.toFixed(2) + ':1';
+    p.el.querySelector('.ct-g').textContent = grade;
+  });
+  const sc = $('score');
+  sc.textContent = low ? `${low} to check` : 'All readable';
+  sc.classList.toggle('warn', !!low);
+}
+
+/* ================= YAML ================= */
 function toYaml(){
-  var c=S.c,L=['base: "'+S.base+'"','colors:'];
-  ['accent','accentVariant','secondary','secondaryVariant','background','menus','title','accentVariant2','sentMessage','sentReply','receivedMessage','receivedReply'].forEach(function(k){L.push('  '+k+': "'+c[k]+'"')});
-  L.push('wallpaper:','  scale: '+Number(S.scale).toFixed(1),'  scaleType: "'+S.type+'"','  background: "'+c.wpBackground+'"','  tint: "'+c.wpTint+'"');
-  return L.join('\n')+'\n';
+  const c = S.c, L = [`base: "${S.base}"`, 'colors:'];
+  EXPORT_ORDER.forEach(k => L.push(`  ${k}: "${c[k]}"`));
+  L.push('wallpaper:', '  scale: ' + Number(S.scale).toFixed(1), `  scaleType: "${S.type}"`, `  background: "${c.wpBackground}"`, `  tint: "${c.wpTint}"`);
+  return L.join('\n') + '\n';
+}
+const esc = s => s.replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+function hlYaml(y){
+  return y.split('\n').map(line => {
+    const m = line.match(/^(\s*)([A-Za-z0-9]+):(.*)$/); if (!m) return esc(line);
+    const v = m[3].trim(); let vh = '';
+    const cm = v.match(/^"(#[0-9a-f]{8})"$/i);
+    if (cm) vh = ` <span class="ys">"${cm[1]}"</span><i class="ysw" style="--c:${rgba(cm[1])}"></i>`;
+    else if (/^".*"$/.test(v)) vh = ` <span class="ys">${esc(v)}</span>`;
+    else if (v) vh = ` <span class="yn">${esc(v)}</span>`;
+    return `${m[1]}<span class="yk">${m[2]}</span>:${vh}`;
+  }).join('\n');
 }
 function fromYaml(t){
-  var out={base:S.base,c:Object.assign({},S.c),scale:S.scale,type:S.type},sec='',n=0;
-  t.split(/\r?\n/).forEach(function(line){
-    var m=line.match(/^(\s*)([A-Za-z0-9]+)\s*:\s*(.*)$/);if(!m)return;
-    var ind=m[1].length,k=m[2],v=m[3].trim().replace(/^["']|["']$/g,'');
-    if(ind===0){sec=k;if(k==='base'){var u=v.toUpperCase();out.base=(u==='LIGHT')?'LIGHT':'DARK';n++}return}
-    if(sec==='colors'&&MAP[k]&&parse(v)){var p=parse(v);out.c[k]=fmt(p.a,p.hex);n++}
-    if(sec==='wallpaper'){
-      if(k==='background'&&parse(v)){var q=parse(v);out.c.wpBackground=fmt(q.a,q.hex);n++}
-      if(k==='tint'&&parse(v)){var w=parse(v);out.c.wpTint=fmt(w.a,w.hex);n++}
-      if(k==='scale'&&parseFloat(v)>0){out.scale=parseFloat(v);n++}
-      if(k==='scaleType'&&/^(fill|fit|repeat)$/.test(v)){out.type=v;n++}
+  const out = {base:S.base, c:Object.assign({}, S.c), scale:S.scale, type:S.type}; let sec = '', n = 0;
+  t.split(/\r?\n/).forEach(line => {
+    const m = line.match(/^(\s*)([A-Za-z0-9]+)\s*:\s*(.*)$/); if (!m) return;
+    const ind = m[1].length, k = m[2], v = m[3].trim().replace(/^["']|["']$/g, '');
+    if (ind === 0) { sec = k; if (k === 'base') { const u = v.toUpperCase(); out.base = BASES.some(b => b[0] === u) ? u : 'DARK'; n++; } return; }
+    if (sec === 'colors' && MAP[k] && norm(v)) { out.c[k] = norm(v); n++; }
+    if (sec === 'wallpaper') {
+      if (k === 'background' && norm(v)) { out.c.wpBackground = norm(v); n++; }
+      if (k === 'tint' && norm(v)) { out.c.wpTint = norm(v); n++; }
+      if (k === 'scale' && parseFloat(v) > 0) { out.scale = parseFloat(v); n++; }
+      if (k === 'scaleType' && /^(fill|fit|repeat)$/.test(v)) { out.type = v; n++; }
     }
   });
-  return n?out:null;
+  return n ? out : null;
 }
-$('apply').addEventListener('click',function(){
-  var r=fromYaml($('imp').value),s=$('istatus');
-  if(!r){s.textContent='No theme values found. Paste the full file contents.';return}
-  S.base=r.base;S.c=r.c;S.scale=r.scale;S.type=r.type;render(true);s.textContent='Loaded.';
+
+/* ================= Render ================= */
+const slug = () => (S.name || '').trim().toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^[-.]+|-+$/g, '') || 'mytheme';
+function render(o = {}){
+  for (const k in MAP) pv.style.setProperty(MAP[k], rgba(S.c[k]));
+  pv.style.setProperty('--p-fg', S.base === 'LIGHT' ? '#111418' : '#ffffff');
+  pv.style.setProperty('--p-wpsize', Math.max(14, Math.round(36 * S.scale)) + 'px');
+  KEYS.forEach(k => {
+    const p = parse(S.c[k]); if (!p) return; const r = rows[k];
+    const col = rgba(S.c[k]);
+    r.sw.style.setProperty('--c', col);
+    r.al.style.setProperty('--track', p.hex);
+    r.pick.value = p.hex; r.al.value = p.a; r.alv.textContent = Math.round(p.a / 2.55) + '%';
+    if (k !== o.skip && document.activeElement !== r.hex) { r.hex.value = S.c[k]; r.hex.classList.remove('bad'); }
+    r.el.classList.toggle('mod', !!origin && origin.c[k] !== S.c[k]);
+  });
+  document.querySelectorAll('[data-strip]').forEach(i => i.style.setProperty('--c', rgba(S.c[i.dataset.strip])));
+  if (o.full) {
+    $('wpscale').value = S.scale; $('wptype').value = S.type;
+    if (document.activeElement !== $('tname')) $('tname').value = S.name;
+  }
+  baseEl.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.b === S.base));
+  PRESETS.forEach(p => p.el.setAttribute('aria-pressed', p.base === S.base && KEYS.every(k => p.c[k] === S.c[k])));
+  $('yaml').innerHTML = hlYaml(toYaml());
+  $('fname').textContent = slug() + '.theme';
+  readability();
+  store.set(STORE, JSON.stringify({S, origin}));
+  if (!o.noCommit) commitSoon();
+}
+
+/* ================= Export / import ================= */
+function toast(msg, err){
+  const t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.textContent = msg;
+  const box = $('toasts'); box.appendChild(t);
+  while (box.children.length > 3) box.firstChild.remove();
+  setTimeout(() => t.remove(), 2600);
+}
+async function copyText(txt, okMsg){
+  try { await navigator.clipboard.writeText(txt); toast(okMsg); }
+  catch(e) {
+    const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch(_) {}
+    ta.remove(); toast(ok ? okMsg : 'Copy failed. Select the text and copy it manually.', !ok);
+  }
+}
+function download(){
+  try {
+    const url = URL.createObjectURL(new Blob([toYaml()], {type:'text/plain'}));
+    const a = document.createElement('a'); a.href = url; a.download = slug() + '.theme';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Saved ' + slug() + '.theme');
+  } catch(e) { toast('Download failed. Use Copy text instead.', true); }
+}
+$('dl').addEventListener('click', download);
+$('dl-top').addEventListener('click', download);
+$('copy').addEventListener('click', () => copyText(toYaml(), 'Theme copied'));
+
+function encodeShare(){
+  const j = JSON.stringify({n:S.name, b:S.base, c:KEYS.map(k => S.c[k].slice(1)), s:S.scale, t:S.type});
+  return btoa(unescape(encodeURIComponent(j))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodeShare(str){
+  try {
+    const j = JSON.parse(decodeURIComponent(escape(atob(str.replace(/-/g,'+').replace(/_/g,'/')))));
+    if (!Array.isArray(j.c) || j.c.length !== KEYS.length) return null;
+    const c = {}; for (let i = 0; i < KEYS.length; i++) { const v = norm(j.c[i]); if (!v) return null; c[KEYS[i]] = v; }
+    return {name:String(j.n || 'mytheme').slice(0, 60), base:BASES.some(b => b[0] === j.b) ? j.b : 'DARK', c, scale:+j.s > 0 ? +j.s : 1, type:/^(fill|fit|repeat)$/.test(j.t) ? j.t : 'fill'};
+  } catch(e) { return null; }
+}
+$('share').addEventListener('click', () => copyText(location.href.split('#')[0] + '#t=' + encodeShare(), 'Share link copied'));
+
+function importText(txt, name){
+  const r = fromYaml(txt);
+  if (!r) { toast('No theme values found in that text', true); return false; }
+  if (name) r.name = name;
+  setState(r, {keepName:!name});
+  toast(name ? `Imported ${name}` : 'Theme loaded');
+  return true;
+}
+$('apply').addEventListener('click', () => importText($('imp').value));
+async function importFile(f){
+  if (!f) return;
+  if (f.size > 200000) { toast('That file is too large to be a theme', true); return; }
+  const txt = await f.text();
+  $('imp').value = txt;
+  importText(txt, f.name.replace(/\.(theme|ya?ml|txt)$/i, ''));
+}
+$('pickfile').addEventListener('click', () => $('file').click());
+$('file').addEventListener('change', e => { importFile(e.target.files[0]); e.target.value = ''; });
+const drop = $('drop');
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => importFile(e.dataTransfer.files[0]));
+
+$('tname').addEventListener('input', e => { S.name = e.target.value; render(); });
+
+/* ================= Shortcuts ================= */
+$('undo').addEventListener('click', () => step(-1));
+$('redo').addEventListener('click', () => step(1));
+document.addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  const k = e.key.toLowerCase();
+  if (k === 's') { e.preventDefault(); download(); return; }
+  if (e.target.matches('textarea, input:not([type=range]):not([type=color])')) return;
+  if (k === 'z' && !e.shiftKey) { e.preventDefault(); step(-1); }
+  else if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); step(1); }
 });
-$('copy').addEventListener('click',function(){
-  var ta=$('yaml'),s=$('status');
-  function fb(){ta.focus();ta.select();s.textContent='Selected. Press copy on your keyboard.'}
-  try{navigator.clipboard.writeText(ta.value).then(function(){s.textContent='Copied.';setTimeout(function(){s.textContent=''},2000)},fb)}catch(e){fb()}
-});
-$('dl').addEventListener('click',function(){
-  var s=$('status');
-  try{
-    var url=URL.createObjectURL(new Blob([$('yaml').value],{type:'text/plain'}));
-    var a=document.createElement('a');a.href=url;a.download='mytheme.theme';
-    document.body.appendChild(a);a.click();a.remove();
-    setTimeout(function(){URL.revokeObjectURL(url)},1000);
-    s.textContent='Saved as mytheme.theme.';setTimeout(function(){s.textContent=''},2500);
-  }catch(e){s.textContent='Download failed. Use Copy theme instead.'}
-});
-load(PRESETS['SimpleX Dark']);
+
+/* ================= Editor appearance ================= */
+const UI_MODES = ['system','light','dark'];
+const UI_ICON = {
+  system:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 010 16z" fill="currentColor"/></svg>',
+  light:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  dark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 119.5 4a6.5 6.5 0 0010.5 10.5z"/></svg>'
+};
+let ui = store.get(UISTORE); if (!UI_MODES.includes(ui)) ui = 'system';
+function applyUi(){
+  if (ui === 'system') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', ui);
+  const b = $('uitheme'); b.innerHTML = UI_ICON[ui];
+  b.title = `Editor appearance: ${ui} (click to change)`;
+}
+$('uitheme').addEventListener('click', () => { ui = UI_MODES[(UI_MODES.indexOf(ui) + 1) % 3]; store.set(UISTORE, ui); applyUi(); });
+applyUi();
+
+/* ================= Boot ================= */
+genSw();
+(function boot(){
+  const hm = location.hash.match(/^#t=([A-Za-z0-9_-]+)/);
+  const shared = hm && decodeShare(hm[1]);
+  if (shared) {
+    S.c = clone(PRESETS[0].c); setState(shared, {keepName:false});
+    history.replaceState(null, '', location.pathname + location.search);
+    toast('Opened shared theme');
+  } else {
+    let saved = null; try { saved = JSON.parse(store.get(STORE)); } catch(e) {}
+    if (saved && saved.S && saved.S.c && KEYS.every(k => norm(saved.S.c[k]))) {
+      S = Object.assign({name:'mytheme', base:'DARK', scale:1, type:'fill'}, saved.S);
+      origin = saved.origin && saved.origin.c ? saved.origin : clone(S);
+      render({full:true, noCommit:true});
+    } else {
+      S.c = clone(PRESETS[0].c); setState(PRESETS[0]);
+    }
+  }
+  commit();
+})();
 })();
 </script>
 </body>
